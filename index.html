@@ -1,0 +1,1853 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fami Heroes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#FFF6EC">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: one column app shell, sticky header, bottom tab bar for parents; card art drawn on canvas at 63×88mm */
+:root{
+  --bg:#FFF6EC; --surface:#FFFFFF; --ink:#2B2340; --muted:#6E6380; --line:#EADFD2; --chip:#F4ECE2;
+  --primary:#2B2340; --primary-ink:#FFF9EF; --accent:#D63C74; --accent-soft:#FFE1EC; --danger:#B8283F;
+  --shadow:0 6px 18px rgba(43,35,64,.12);
+  --font:"Noto Sans TC","PingFang TC","Heiti TC",system-ui,sans-serif;
+  --num:"Fredoka","Noto Sans TC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1724; --surface:#262033; --ink:#F3EEF9; --muted:#B8AECB; --line:#3A3250; --chip:#322A44;
+    --primary:#F3EEF9; --primary-ink:#1B1724; --accent:#FF7AA6; --accent-soft:#4A2638; --danger:#FF8597;
+    --shadow:0 6px 18px rgba(0,0,0,.4); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1724; --surface:#262033; --ink:#F3EEF9; --muted:#B8AECB; --line:#3A3250; --chip:#322A44;
+  --primary:#F3EEF9; --primary-ink:#1B1724; --accent:#FF7AA6; --accent-soft:#4A2638; --danger:#FF8597;
+  --shadow:0 6px 18px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tile:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px;font:400 22px "Lilita One","Fredoka",var(--font);letter-spacing:.5px}
+.brand-mark{width:30px;height:40px;border-radius:5px;background:linear-gradient(135deg,#FF7A59,#FFC93C 45%,#5CC46B 70%,#4FB3F6);box-shadow:inset 0 0 0 3px #FFF9EF,0 0 0 2px var(--ink);transform:rotate(-8deg)}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);min-width:0}
+.who strong{color:var(--ink)}
+.demo{background:var(--accent-soft);color:var(--ink);font-size:14px;text-align:center;padding:6px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+
+main{max-width:1100px;margin:0 auto;padding-block:16px calc(110px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.view{display:flex;flex-direction:column;gap:16px}
+.view-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.view-head h2{font-size:24px;font-weight:900}
+.sub{color:var(--muted);font-size:14px;margin:0}
+
+.btn{min-height:44px;border-radius:12px;padding:0 16px;font-weight:700;font-size:16px;border:0;background:var(--chip);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.primary{background:var(--primary);color:var(--primary-ink)}
+.btn.accent{background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border:2px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:2px solid currentColor}
+.btn.small{min-height:36px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn svg{width:20px;height:20px}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--chip);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px 14px}
+.tile{position:relative;border:0;padding:0;background:none;text-align:left;display:flex;flex-direction:column;gap:6px}
+.tile .face{width:100%;aspect-ratio:63/88;border-radius:4.8%/3.4%;background:var(--chip);box-shadow:var(--shadow);display:block;object-fit:cover}
+.tile .meta{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;color:var(--muted);min-width:0}
+.tile .meta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owners{display:flex;gap:3px;flex:none}
+.badge-new{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;font:700 13px var(--num);padding:2px 8px;border-radius:999px;box-shadow:var(--shadow)}
+.check{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:2px solid #2B2340;display:grid;place-items:center}
+.check svg{width:18px;height:18px;opacity:0}
+.tile[aria-pressed="true"] .check{background:#2B2340}
+.tile[aria-pressed="true"] .check svg{opacity:1}
+.tile[aria-pressed="true"] .face{outline:4px solid var(--accent);outline-offset:2px}
+
+.empty{background:var(--surface);border:2px dashed var(--line);border-radius:16px;padding:28px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px}
+
+.group{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.group h3{font-size:17px;font-weight:900}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.label{font-weight:700;font-size:15px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+input[type=text],input[type=number],input[type=password],input[type=month],select,textarea{min-height:44px;width:100%;border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:500 16px var(--font);background:var(--surface);color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+.hint{font-size:13px;color:var(--muted)}
+.note{font-size:14px;background:var(--accent-soft);border-radius:10px;padding:8px 12px}
+
+.editor{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.preview{display:flex;flex-direction:column;align-items:center;gap:10px}
+.preview canvas{width:min(100%,300px);aspect-ratio:63/88;border-radius:4.8%/3.4%;box-shadow:var(--shadow);background:var(--chip)}
+.form{display:flex;flex-direction:column;gap:16px;min-width:0}
+.savebar{display:flex;gap:10px;flex-wrap:wrap}
+.mini{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:84px;aspect-ratio:63/88;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:15;border:0;padding:0;background:var(--chip);overflow:hidden}
+.mini img{width:100%;height:100%;display:block}
+@media (min-width:860px){
+  .editor{grid-template-columns:330px minmax(0,1fr);align-items:start}
+  .preview{position:sticky;top:76px}
+  .mini{display:none}
+}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tab{border:0;background:none;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;font-weight:700;color:var(--muted)}
+.tab svg{width:24px;height:24px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+.login{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center}
+.login h1{font:400 44px "Lilita One","Fredoka",var(--font);letter-spacing:1px}
+.fan{position:relative;width:220px;height:170px}
+.fan canvas{position:absolute;left:50%;top:0;width:100px;border-radius:5px;box-shadow:var(--shadow)}
+.login-actions{display:flex;flex-direction:column;gap:12px;width:min(100%,340px)}
+.login-actions .btn{min-height:56px;font-size:18px}
+.err{color:var(--danger);font-weight:700;font-size:14px;min-height:1.5em}
+
+.kids{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.kid-btn{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:900;font-size:18px}
+.avatar{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font:900 40px var(--font);color:#fff;box-shadow:var(--shadow)}
+.avatar.sm{width:40px;height:40px;font-size:18px}
+
+.dex-head{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;align-items:center;gap:16px}
+.dex-head .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.dex-head h2{font-size:22px;font-weight:900}
+.bar{height:14px;border-radius:999px;background:var(--chip);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#FF7A59,#FFC93C,#5CC46B,#4FB3F6);border-radius:999px}
+.count{font:700 18px var(--num);font-variant-numeric:tabular-nums}
+
+.kidlist{display:flex;flex-direction:column;gap:10px}
+.kidrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.kidrow .grow{flex:1;min-width:0}
+
+.modal{position:fixed;inset:0;z-index:50;background:rgba(20,16,30,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:min(560px,100%);max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding-block:18px calc(20px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:22px}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sheet-head h3{font-size:20px;font-weight:900}
+.big{position:relative;width:min(80vw,360px);aspect-ratio:63/88;margin:0 auto;border-radius:4.8%/3.4%;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35);touch-action:none}
+.big canvas,.big img{width:100%;height:100%;display:block}
+.shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 44%,rgba(255,214,250,.45) 50%,rgba(190,240,255,.4) 56%,transparent 70%);background-size:260% 260%;mix-blend-mode:screen;animation:shine 4.5s ease-in-out infinite alternate}
+.shine.manual{animation:none}
+@keyframes shine{from{background-position:0% 0%}to{background-position:100% 100%}}
+@media (prefers-reduced-motion: reduce){.shine{animation:none;background-position:40% 40%}}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow .btn{flex:1 1 140px}
+
+.cropper{position:fixed;inset:0;z-index:60;background:#14101C;color:#F3EEF9;display:flex;flex-direction:column}
+.cropper-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:calc(10px + env(safe-area-inset-top,0px)) 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-weight:700}
+.cropper canvas{flex:1;min-height:0;width:100%;touch-action:none;cursor:grab}
+.crop-ctl{display:flex;flex-direction:column;gap:10px;padding-block:12px calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:640px;width:100%;margin:0 auto}
+.crop-ctl label{display:grid;grid-template-columns:64px minmax(0,1fr) 52px;align-items:center;gap:10px;font-size:14px}
+.crop-ctl output{font:600 14px var(--num);text-align:right}
+.crop-ctl input[type=range]{width:100%;accent-color:#FF7AA6}
+.cropper .btn{background:#2E2740;color:#F3EEF9}
+.cropper .btn.accent{background:#FF7AA6;color:#14101C}
+
+.sheets{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.sheetout{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.sheetout img{width:100%;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+
+.series{display:flex;flex-direction:column;gap:12px}
+.series-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.series-head h3{font-size:20px;font-weight:900}
+.series-head .bar{flex:1 1 120px;min-width:100px;height:10px}
+.done-badge{background:#F2C14E;color:#2B2340;font-weight:900;font-size:13px;padding:2px 10px;border-radius:999px}
+.badge-reward{position:absolute;top:-6px;left:-6px;background:#2B2340;color:#F7D774;font:700 12px var(--font);padding:2px 8px;border-radius:999px;box-shadow:var(--shadow)}
+.tile.reward-ready .face{outline:4px solid #F2C14E;outline-offset:2px;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{outline-color:#FF8A3D}}
+.big.flipwrap{overflow:visible;box-shadow:none;perspective:1400px}
+.flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transform:rotateY(180deg) scale(.35)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:4.8%/3.4%;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.flip .face canvas{width:100%;height:100%;display:block}
+.flip .front{transform:translateZ(1px)}
+.flip .back{transform:rotateY(180deg) translateZ(1px)}
+.flip.play{animation:reveal 2.6s cubic-bezier(.33,.7,.25,1) forwards}
+@keyframes reveal{0%{transform:rotateY(180deg) scale(.35) rotate(-14deg)}22%{transform:rotateY(180deg) scale(1.06) rotate(0)}48%{transform:rotateY(180deg) scale(1)}100%{transform:rotateY(720deg) scale(1)}}
+.sheet{position:relative}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.confetti i{position:absolute;top:-20px;width:10px;height:14px;border-radius:2px;animation:fall 2.8s ease-in forwards}
+@keyframes fall{to{top:110%;transform:rotate(760deg)}}
+.celebrate{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding-block:12px}
+.celebrate h3{font:400 40px "Lilita One","Noto Sans TC",var(--font);letter-spacing:1px}
+.celebrate p{margin:0;font-size:18px;font-weight:700}
+.celebrate-star{width:96px;height:96px}
+.celebrate-star svg{width:100%;height:100%}
+@media (prefers-reduced-motion: reduce){.confetti{display:none}.tile.reward-ready .face{animation:none}}
+.modal.bare{background:rgba(12,9,20,.9);align-items:center}
+.modal.bare .sheet{background:transparent;width:auto;max-height:none;overflow:visible;padding:0;border-radius:0;box-shadow:none}
+.modal.bare .big{width:min(86vw, calc(78vh * 63 / 88), 440px);cursor:pointer}
+.bare-close{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center}
+.bare-close svg{width:22px;height:22px}
+.badge-draft{position:absolute;top:-6px;right:-6px;background:var(--surface);color:var(--ink);border:2px dashed var(--muted);font:700 12px var(--font);padding:1px 8px;border-radius:999px}
+.drafts{background:var(--surface);border:2px dashed var(--line);border-radius:16px;padding:14px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--primary);color:var(--primary-ink);padding:10px 18px;border-radius:999px;font-weight:700;font-size:15px;opacity:0;transition:opacity .2s,transform .2s;z-index:80;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+</style>
+
+<header class="top"><div class="top-in">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Fami Heroes</div>
+  <div class="who" id="who"></div>
+</div></header>
+<div class="demo" id="demoBanner" hidden>示範模式：資料只存在這台裝置的瀏覽器裡。接上 Google 後台後，全家共用同一批卡。</div>
+
+<main>
+  <section class="view" id="v-login"></section>
+  <section class="view" id="v-kidpick" hidden></section>
+  <section class="view" id="v-dex" hidden></section>
+  <section class="view" id="v-cards" hidden></section>
+  <section class="view" id="v-editor" hidden></section>
+  <section class="view" id="v-print" hidden></section>
+  <section class="view" id="v-kids" hidden></section>
+</main>
+
+<nav class="tabbar" id="tabbar" hidden aria-label="主要功能"><div class="tabbar-in">
+  <button class="tab" data-tab="cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="11" height="15" rx="2"></rect><path d="M18 6.5l1.6.6a1 1 0 0 1 .6 1.3l-3.9 10.3a1 1 0 0 1-1.3.6L9 17.5"></path></svg>卡片</button>
+  <button class="tab" data-tab="editor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>做卡</button>
+  <button class="tab" data-tab="print"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"></path><rect x="3" y="9" width="18" height="8" rx="2"></rect><path d="M7 14h10v7H7z"></path></svg>列印</button>
+  <button class="tab" data-tab="kids"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M3 20c.6-3.5 3-5.5 6-5.5s5.4 2 6 5.5"></path><circle cx="17.5" cy="9.5" r="2.5"></circle><path d="M16.5 14.6c2.4.2 4 1.9 4.5 4.4"></path></svg>設定</button>
+</div></nav>
+
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<div class="cropper" id="cropper" hidden>
+  <div class="cropper-top"><span id="cropTitle">裁切照片</span><span class="hint" style="color:#B8AECB">拖曳移動，兩指縮放</span></div>
+  <canvas id="cropCanvas"></canvas>
+  <div class="crop-ctl">
+    <label for="cropZoom">放大<input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1"><output id="cropZoomOut">1.0×</output></label>
+    <label for="cropRot">微調角度<input type="range" id="cropRot" min="-45" max="45" step="0.5" value="0"><output id="cropRotOut">0°</output></label>
+    <div class="btnrow">
+      <button class="btn" id="cropL" type="button">向左轉 90°</button>
+      <button class="btn" id="cropR" type="button">向右轉 90°</button>
+    </div>
+    <div class="btnrow">
+      <button class="btn" id="cropCancel" type="button">取消</button>
+      <button class="btn accent" id="cropOk" type="button">使用這張</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   設定：部署 Apps Script 後，把網址與 Google 用戶端 ID 填在這裡。
+   兩個都空白時，app 以「示範模式」運作（資料只存在這台裝置）。
+   ============================================================ */
+const CONFIG = {
+  API_URL: '',
+  GOOGLE_CLIENT_ID: ''
+};
+
+(function () {
+'use strict';
+const DEMO = !CONFIG.API_URL;
+
+/* ---------------- 小工具 ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return el;
+}
+const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const pad3 = n => String(n || 0).padStart(3, '0');
+const ymNow = () => { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0'); };
+const clone = o => JSON.parse(JSON.stringify(o));
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600); }
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const svgIcon = (d, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${d}"></path></svg>`;
+
+/* ---------------- IndexedDB（照片快取、示範資料） ---------------- */
+const kv = (() => {
+  let p;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open('family-cards', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const run = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const tx = db.transaction('kv', mode); const req = fn(tx.objectStore('kv')); tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); }); };
+  return {
+    get: k => run('readonly', s => s.get(k)).catch(() => undefined),
+    set: (k, v) => run('readwrite', s => s.put(v, k)).catch(() => {}),
+    del: k => run('readwrite', s => s.delete(k)).catch(() => {})
+  };
+})();
+
+/* ============================================================
+   遊戲資料：屬性、卡種、招式庫、效果
+   ============================================================ */
+const ICON = {
+  fire: 'M 12.74 2.52c 0.84 4.48 5.46 7 5.46 13.16A 6.86 6.86 0 0 1 5.88 18.61c 0 -2.8 1.26 -4.76 3.08 -6.44 0.14 2.24 1.12 3.78 2.8 4.34 -0.42 -4.76 0.14 -9.24 0.98 -14z',
+  water: 'M12 3c2.8 3.7 5.5 7 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 10 9.2 6.7 12 3z',
+  grass: 'M19 4C10 4 5 9 5 16c0 1.2.2 2.3.5 3.3C7 12 11 9 15 7.5 11.5 10 8.5 14 7 19.5c7 0 12-5 12-15.5z',
+  thunder: 'M14.6 1.5L3.8 14H10.8L8.6 22.6L20.4 9.4H13.4L16.4 1.5Z',
+  light: 'M12 7.8a4.2 4.2 0 1 0 0 8.4a4.2 4.2 0 1 0 0-8.4z',
+  lightRays: 'M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8',
+  dark: 'M9.35 2.77A9.6 9.6 0 1 0 21.23 14.65A8.4 8.4 0 0 1 9.35 2.77Z',
+  any: 'M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z',
+  heart: 'M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM15.5 13a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0z',
+  mountain: 'M3 19l6-9 4 6 3-4 5 7z',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  tool: 'M4 20l9.5-9.5M14 4l6 6-3.5 1.5-4-4z',
+  up: 'M12 19V5M6 11l6-6 6 6',
+  clock: 'M20.5 12a8.5 8.5 0 1 1-17 0a8.5 8.5 0 1 1 17 0zM12 7.5V12l3 2'
+};
+const ATTR = {
+  fire:    { name: '火', bg: '#FF7A59', fg: '#FFFFFF', tint: '#FFE3D6', ink: '#7A3A26' },
+  water:   { name: '水', bg: '#4FB3F6', fg: '#FFFFFF', tint: '#DDF0FD', ink: '#1F5A85' },
+  grass:   { name: '草', bg: '#5CC46B', fg: '#FFFFFF', tint: '#DFF4E2', ink: '#22633A' },
+  thunder: { name: '雷', bg: '#FFC93C', fg: '#5A4100', tint: '#FFF1C7', ink: '#6B4E00' },
+  light:   { name: '光', bg: '#FFF3CC', fg: '#C08A00', ring: '#E0A800', frame: '#F2CF6B', tint: '#FFF6DA', ink: '#6E5200' },
+  dark:    { name: '暗', bg: '#6A4FC4', fg: '#FFFFFF', tint: '#E8E2F8', ink: '#3E2C82' },
+  any:     { name: '任意', bg: '#CFC7DA', fg: '#FFFFFF' }
+};
+const ATTR_KEYS = ['fire', 'water', 'grass', 'thunder', 'light', 'dark'];
+const BEATS = { fire: 'grass', grass: 'thunder', thunder: 'water', water: 'fire', light: 'dark', dark: 'light' };
+const WEAK_TO = a => ATTR_KEYS.find(k => BEATS[k] === a) || null;
+const RESIST = a => (a === 'light' || a === 'dark') ? null : BEATS[a];
+
+const TYPE = {
+  character: { label: '家人', name: '角色', frame: null },
+  scene:   { label: '場景', name: '場景', icon: 'mountain', frame: '#3D5A80', pill: '#3D5A80', tint: '#E3ECF6', ink: '#2F4A6B', box: '#EEF3F9', photoBorder: '#BFD3EA' },
+  mission: { label: '任務', name: '任務', icon: 'check', frame: '#FF7EB6', pill: '#B0306A', tint: '#FFE1EE', ink: '#8A1F4E', box: '#FFF0F6', photoBorder: '#FFC2DA' },
+  item:    { label: '道具', name: '道具', icon: 'tool', frame: '#B9773A', pill: '#7A4A1E', tint: '#F6E6D2', ink: '#6B3F14', box: '#FBF1E4', photoBorder: '#E9C894' },
+  boost:   { label: '強化', name: '強化', icon: 'up', frame: '#14B8A6', pill: '#0B6F64', tint: '#D5F5F0', ink: '#0B5E55', box: '#EAFAF7', photoBorder: '#A6E8DE' }
+};
+const TYPE_KEYS = ['character', 'scene', 'mission', 'item', 'boost'];
+
+const SKILL_GROUPS = [
+  { name: '家人招式（任何屬性都能用）', skills: [
+    ['fly', '飛高高', ['any'], '20', '—'],
+    ['tickle', '搔癢攻擊', ['any'], '10', '對手下一回合的招式傷害 −10'],
+    ['hug', '大大的擁抱', ['any'], '0', '自己的 HP 回復 20'],
+    ['story', '晚安故事', ['any', 'any'], '0', '對手的下一回合不能攻擊'],
+    ['hug2', '超級擁抱', ['any', 'any'], '40', '自己的 HP 回復 10'],
+    ['family', '全家出動', ['any', 'any', 'any'], '30+', '每有 1 張待命角色，傷害 +20']
+  ] },
+  { name: '火', skills: [['firefist', '火火拳', ['fire'], '20', '—'], ['blaze', '熱情大爆發', ['fire', 'fire', 'any'], '70', '自己的 HP −20']] },
+  { name: '水', skills: [['squirt', '水槍噴噴', ['water'], '20', '—'], ['bath', '洗澎澎', ['water', 'any'], '30', '自己的 HP 回復 20']] },
+  { name: '草', skills: [['vine', '藤蔓綁綁', ['grass'], '10', '對手下一回合的招式傷害 −20'], ['forest', '森林深呼吸', ['grass', 'any'], '30', '我方所有角色 HP 回復 10']] },
+  { name: '雷', skills: [['zapkick', '閃電腳', ['thunder'], '20', '擲硬幣，正面再 +20'], ['charge', '雷霆衝鋒', ['thunder', 'thunder', 'any'], '80', '自己的 HP −30']] },
+  { name: '光', skills: [['smile', '閃亮笑容', ['light'], '10', '我方任一角色 HP 回復 20'], ['rainbow', '彩虹光束', ['light', 'light', 'any'], '60', '—']] },
+  { name: '暗', skills: [['peekaboo', '躲貓貓', ['dark'], '0', '擲硬幣，正面的話，下一回合對手打不到這個角色'], ['nightbeast', '黑夜怪獸', ['dark', 'dark', 'any'], '70', '擲硬幣，反面就沒打中']] }
+];
+const SKILL = {};
+SKILL_GROUPS.forEach(g => g.skills.forEach(([id, name, cost, dmg, effect]) => { SKILL[id] = { id, name, cost, dmg, effect }; }));
+const SKILL_GROUP_KEYS = [['family', '家人招式（任何屬性都能用）'], ['fire', '火'], ['water', '水'], ['grass', '草'], ['thunder', '雷'], ['light', '光'], ['dark', '暗']];
+const DEFAULT_SKILLS = [];
+SKILL_GROUPS.forEach((g, gi) => g.skills.forEach(([id, name, cost, dmg, effect]) => DEFAULT_SKILLS.push({ id, name, cost, dmg, effect, group: SKILL_GROUP_KEYS[gi][0] })));
+/* 招式庫存在設定裡，可新增修改；卡片做好時會把招式內容存進卡片，之後改招式庫不影響舊卡 */
+const skillLib = () => (typeof DATA !== 'undefined' && DATA.settings && Array.isArray(DATA.settings.skills) && DATA.settings.skills.length) ? DATA.settings.skills : DEFAULT_SKILLS;
+const skillById = id => skillLib().find(s => s.id === id) || null;
+
+const ITEM_EFFECTS = ['裝備的角色 HP +30', '裝備的角色招式傷害 +10', '裝備的角色受到的傷害 −10', '裝備的角色被剋時不會 ×2'];
+const BOOST_EFFECTS = ['我方上場角色的 HP 回復 30', '這一回合招式傷害 +30', '馬上多拿 1 顆能量', '對手的上場角色丟掉 1 顆能量', '把 1 張待命角色換上場', '擲硬幣 2 次，每個正面回復 HP 20'];
+const RARITY = { normal: '普通', holo: '閃卡', limited: '限定' };
+const FILTERS = { none: '原色', warm: '暖色', vintage: '復古', mono: '黑白', vivid: '鮮豔' };
+
+/* ============================================================
+   卡面繪製引擎（座標單位 0.1mm：630 × 880 = 63 × 88mm）
+   ============================================================ */
+const BW = 630, BH = 880;
+const PANEL = { x: 34, y: 34, w: 562, h: 812 };  // 外框 3.4mm，裁切誤差比較不明顯
+const CX = 54, CW = 522, CR = 576;
+const PHOTO_BOX = { character: 304, scene: 364, mission: 274, item: 324, boost: 314 };
+const photoInset = type => type === 'item' ? 15 : 6;
+const photoAspect = type => (CW - photoInset(type) * 2) / (PHOTO_BOX[type] - photoInset(type) * 2);
+
+const F = {
+  sans: (w, s) => `${w} ${s}px "Noto Sans TC","PingFang TC","Heiti TC",sans-serif`,
+  num: (w, s) => `${w} ${s}px "Fredoka","Noto Sans TC",sans-serif`,
+  hand: s => `400 ${s}px "LXGW WenKai TC","Noto Sans TC",serif`,
+  serif: (w, s) => `${w} ${s}px "Noto Serif TC","Noto Sans TC",serif`
+};
+
+const pathCache = new Map();
+const P2 = d => { let p = pathCache.get(d); if (!p) { p = new Path2D(d); pathCache.set(d, p); } return p; };
+function rr(ctx, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+function glyph(ctx, d, cx, cy, size, color, stroke, lw) {
+  ctx.save(); ctx.translate(cx - size / 2, cy - size / 2); ctx.scale(size / 24, size / 24);
+  if (stroke) { ctx.strokeStyle = color; ctx.lineWidth = lw || 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(P2(d)); }
+  else { ctx.fillStyle = color; ctx.fill(P2(d)); }
+  ctx.restore();
+}
+function attrBadge(ctx, key, cx, cy, d, ringColor) {
+  const a = ATTR[key] || ATTR.any;
+  ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2); ctx.fillStyle = a.bg; ctx.fill();
+  if (a.ring) { ctx.lineWidth = d * 0.06; ctx.strokeStyle = a.ring; ctx.beginPath(); ctx.arc(cx, cy, d / 2 - d * 0.04, 0, Math.PI * 2); ctx.stroke(); }
+  if (ringColor) { ctx.lineWidth = 2.5; ctx.strokeStyle = ringColor; ctx.beginPath(); ctx.arc(cx, cy, d / 2 + 2, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 3; ctx.strokeStyle = '#FFF9EF'; ctx.beginPath(); ctx.arc(cx, cy, d / 2 - 1.5, 0, Math.PI * 2); ctx.stroke(); }
+  const gs = d * 0.6;
+  if (key === 'light') { glyph(ctx, ICON.light, cx, cy, gs, a.fg); glyph(ctx, ICON.lightRays, cx, cy, gs, a.fg, true, 2); }
+  else glyph(ctx, ICON[key] || ICON.any, cx, cy, gs, a.fg);
+}
+function star(ctx, cx, cy, size, fill, strokeC, outline) {
+  ctx.save(); ctx.translate(cx - size / 2, cy - size / 2); ctx.scale(size / 24, size / 24);
+  const p = P2(ICON.any);
+  if (outline) { ctx.strokeStyle = fill; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke(p); }
+  else { ctx.fillStyle = fill; ctx.fill(p); if (strokeC) { ctx.strokeStyle = strokeC; ctx.lineWidth = 1.2; ctx.lineJoin = 'round'; ctx.stroke(p); } }
+  ctx.restore();
+}
+function tokenize(text) { return String(text).match(/[A-Za-z0-9.+\-×−%:/]+|\s+|./gu) || []; }
+function wrap(ctx, text, maxW) {
+  const lines = []; let cur = '';
+  for (const t of tokenize(text)) {
+    if (t === '\n') { lines.push(cur); cur = ''; continue; }
+    const test = cur + t;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur.trimEnd()); cur = t.trimStart(); }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function clip(ctx, text, maxW) {
+  text = String(text);
+  if (ctx.measureText(text).width <= maxW) return text;
+  while (text.length > 1 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+  return text + '…';
+}
+function fitSize(ctx, text, fontFn, max, min, maxW) {
+  for (let s = max; s > min; s -= 1) { ctx.font = fontFn(s); if (ctx.measureText(text).width <= maxW) return s; }
+  return min;
+}
+function dashed(ctx, x0, y, x1, color) { ctx.save(); ctx.setLineDash([6, 5]); ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.restore(); }
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed || 1; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---- 框樣式：新增限定系列就在這裡加一組 ---- */
+function drawHoloFrame(ctx) {
+  const g = ctx.createLinearGradient(0, 0, BW, BH * 0.75);
+  [['0', '#FFB8D2'], ['.2', '#FFE29A'], ['.4', '#B8F0C8'], ['.6', '#A9DCFF'], ['.8', '#D7B8FF'], ['1', '#FFB8D2']].forEach(([o, c]) => g.addColorStop(+o, c));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, BW, BH);
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  const tiles = [[90, .2, .15, 3], [70, .7, .4, 2], [110, .4, .8, 3]];
+  for (const [sz, fx, fy, r] of tiles) for (let y = 0; y < BH; y += sz) for (let x = 0; x < BW; x += sz) { ctx.beginPath(); ctx.arc(x + sz * fx, y + sz * fy, r, 0, Math.PI * 2); ctx.fill(); }
+}
+function drawSheen(ctx) {
+  const g = ctx.createLinearGradient(0, 0, BW, BH);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.32, 'rgba(255,255,255,0)'); g.addColorStop(.45, 'rgba(255,255,255,.2)');
+  g.addColorStop(.5, 'rgba(255,214,250,.16)'); g.addColorStop(.58, 'rgba(190,240,255,.12)'); g.addColorStop(.68, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = g; ctx.fillRect(0, 0, BW, BH); ctx.restore();
+}
+function gear(ctx, cx, cy, s, color, hub) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
+  ctx.setLineDash([5.5, 5.5]); ctx.lineWidth = 7; ctx.strokeStyle = color; ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]); ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fillStyle = hub; ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+  ctx.restore();
+}
+const FRAMES = {
+  default: { id: 'default', name: '標準' },
+  ruins: {
+    id: 'ruins', name: '遺跡', panelR: 14, panelBorder: '#5A3516',
+    theme: () => ({ panel: '#F5E8CF', pill: '#3F6B5A', pillInk: '#FFFFFF', tint: '#E8D3AE', ink: '#4A2E14', box: '#EFE0C3', photoBorder: '#5A3516', text: '#3A2410', muted: '#6B4A2A', foot: '#6B4A2A', line: '#D9BE8E', star: '#C98B4A', starStroke: '#5A3516', stamp: '#B98A55', nameFont: s => F.serif(900, s), storyFont: s => F.serif(700, s - 2) }),
+    drawFrame(ctx) {
+      const g = ctx.createLinearGradient(0, 0, BW, BH);
+      [[0, '#6B3F1C'], [.28, '#C98B4A'], [.5, '#8A5528'], [.72, '#DDA567'], [1, '#6B3F1C']].forEach(([o, c]) => g.addColorStop(o, c));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, BW, BH);
+      for (let y = 13; y < BH; y += 32) for (let x = 13; x < BW; x += 32) {
+        if (x > 40 && x < BW - 40 && y > 40 && y < BH - 40) continue;
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#5A3516'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x - .5, y - .5, 2.5, 0, Math.PI * 2); ctx.fillStyle = '#F3D39A'; ctx.fill();
+      }
+      [[32, 32], [BW - 32, 32], [32, BH - 32], [BW - 32, BH - 32]].forEach(([x, y]) => gear(ctx, x, y, 1.25, '#E9C27A', '#8A5528'));
+    }
+  }
+};
+function lin(ctx, x0, y0, x1, y1, stops) { const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => g.addColorStop(o, c)); return g; }
+function star4(ctx, x, y, s) { ctx.beginPath(); ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s); ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s); ctx.fill(); }
+Object.assign(FRAMES, {
+  night: {
+    id: 'night', name: '星空', panelBorder: '#E7C766',
+    theme: () => ({ panel: '#F5F2FF', pill: '#3A2470', tint: '#E6E0FA', ink: '#2E2366', box: '#EEEAFB', photoBorder: '#C9B8FF', text: '#241C4A', muted: '#4B3F7A', foot: '#4B3F7A', line: '#D9D0F5', star: '#E7C766', starStroke: '#8A6A10', stamp: '#9C8BE0' }),
+    drawFrame(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, BW * .5, BH, [[0, '#141A46'], [.55, '#2C2160'], [1, '#4A2A7A']]); ctx.fillRect(0, 0, BW, BH);
+      const r = rng(777);
+      for (let i = 0; i < 140; i++) { ctx.fillStyle = r() < .4 ? 'rgba(255,240,190,.95)' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(r() * BW, r() * BH, .8 + r() * 1.6, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#FFE8A0'; for (let i = 0; i < 10; i++) star4(ctx, r() * BW, r() * BH, 4 + r() * 5);
+    },
+    drawDecor(ctx) { glyph(ctx, ICON.dark, BW - 46, 26, 44, '#FFE8A0'); }
+  },
+  sakura: {
+    id: 'sakura', name: '櫻花',
+    theme: () => ({ panel: '#FFF7F9', pill: '#C2457A', tint: '#FCE3EC', ink: '#8E2A55', box: '#FDEEF3', photoBorder: '#F7A8C2', foot: '#8E2A55', line: '#F6CFDC', stamp: '#F49AB8' }),
+    drawFrame(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, 0, BH, [[0, '#FBD3E0'], [1, '#F29DB9']]); ctx.fillRect(0, 0, BW, BH);
+      const r = rng(4242);
+      for (let i = 0; i < 90; i++) {
+        ctx.beginPath(); ctx.ellipse(r() * BW, r() * BH, 5 + r() * 4, 3 + r() * 2, r() * Math.PI, 0, Math.PI * 2);
+        ctx.fillStyle = r() < .6 ? 'rgba(255,255,255,.78)' : 'rgba(214,90,135,.5)'; ctx.fill();
+      }
+    }
+  },
+  ocean: {
+    id: 'ocean', name: '海洋',
+    theme: () => ({ panel: '#F1FAFC', pill: '#1F6F8B', tint: '#DDF2F8', ink: '#135069', box: '#E6F5F9', photoBorder: '#9ADAEE', foot: '#135069', line: '#CBE9F1', stamp: '#7CC8E0' }),
+    drawFrame(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, 0, BH, [[0, '#63CBEA'], [1, '#1D78AC']]); ctx.fillRect(0, 0, BW, BH);
+      ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = 2;
+      for (let y = 18, row = 0; y < BH + 30; y += 26, row++) for (let x = (row % 2) * 30 - 30; x < BW + 60; x += 60) { ctx.beginPath(); ctx.arc(x, y, 24, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+    }
+  },
+  gold: {
+    id: 'gold', name: '黃金', panelBorder: '#8C6510',
+    theme: () => ({ panel: '#FFFBEF', pill: '#2B2340', pillInk: '#F7D774', tint: '#F8EBC2', ink: '#6B4E00', box: '#FBF3D9', photoBorder: '#E2B33C', foot: '#6B4E00', line: '#EEDCA6', star: '#E2B33C', starStroke: '#6B4E00', stamp: '#E2B33C' }),
+    drawFrame(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, BW, BH, [[0, '#8C6510'], [.25, '#F7D774'], [.5, '#B98A1E'], [.75, '#FFE89A'], [1, '#8C6510']]); ctx.fillRect(0, 0, BW, BH);
+      ctx.lineWidth = 2;
+      for (let d = -BH; d < BW + BH; d += 12) {
+        ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.moveTo(d, 0); ctx.lineTo(d + BH, BH); ctx.stroke();
+        ctx.strokeStyle = 'rgba(120,80,0,.12)'; ctx.beginPath(); ctx.moveTo(d, BH); ctx.lineTo(d + BH, 0); ctx.stroke();
+      }
+    }
+  }
+});
+const FRAME_KEYS = ['ruins', 'night', 'sakura', 'ocean', 'gold'];
+
+/* ---- 系列 ---- */
+const seriesList = () => { const s = (DATA.settings && Array.isArray(DATA.settings.series) && DATA.settings.series.length) ? DATA.settings.series : []; return s.some(x => x.id === 'base') ? s : [{ id: 'base', name: '基本', total: (DATA.settings && DATA.settings.seriesTotal) || 50 }, ...s]; };
+const seriesOf = card => seriesList().find(s => s.id === (card.series || 'base')) || seriesList()[0];
+
+/* ---- 卡背（和實體卡背同一個設計） ---- */
+function arcText(ctx, text, cx, cy, R, size, spacing, bottom, paint) {
+  ctx.font = `400 ${size}px "Lilita One","Fredoka",sans-serif`;
+  const ws = [...text].map(ch => ctx.measureText(ch).width + spacing), total = ws.reduce((a, b) => a + b, 0) - spacing;
+  let acc = 0;
+  [...text].forEach((ch, i) => {
+    const mid = acc + (ws[i] - spacing) / 2; acc += ws[i];
+    const a = bottom ? Math.PI / 2 + total / 2 / R - mid / R : -Math.PI / 2 - total / 2 / R + mid / R;
+    ctx.save(); ctx.translate(cx + R * Math.cos(a), cy + R * Math.sin(a)); ctx.rotate(bottom ? a - Math.PI / 2 : a + Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; paint(ch, size); ctx.restore();
+  });
+}
+function drawBack(ctx) {
+  const cx = BW / 2, cy = 440;
+  ctx.save();
+  ctx.fillStyle = '#2B2340'; ctx.fillRect(0, 0, BW, BH);
+  rr(ctx, PANEL.x, PANEL.y, PANEL.w, PANEL.h, 20); ctx.save(); ctx.clip();
+  for (let i = 0; i < 40; i++) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, 900, i * Math.PI / 20, (i + 1) * Math.PI / 20); ctx.closePath(); ctx.fillStyle = i % 2 ? '#FCE6B8' : '#FFF6E4'; ctx.fill(); }
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 420); glow.addColorStop(0, 'rgba(255,255,255,.75)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow; ctx.fillRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h); ctx.restore();
+  ctx.lineWidth = 4; ctx.strokeStyle = '#F2C14E'; rr(ctx, PANEL.x + 2, PANEL.y + 2, PANEL.w - 4, PANEL.h - 4, 18); ctx.stroke();
+  [[64, 74], [566, 74], [64, 806], [566, 806]].forEach(([x, y]) => { ctx.fillStyle = '#F2C14E'; ctx.strokeStyle = '#2B2340'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y - 20); ctx.quadraticCurveTo(x + 3, y - 3, x + 20, y); ctx.quadraticCurveTo(x + 3, y + 3, x, y + 20); ctx.quadraticCurveTo(x - 3, y + 3, x - 20, y); ctx.quadraticCurveTo(x - 3, y - 3, x, y - 20); ctx.fill(); ctx.stroke(); });
+  [[150, '#2B2340'], [142, '#F2C14E'], [132, '#FFFDF7']].forEach(([r, c]) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); });
+  ctx.save(); ctx.setLineDash([2, 10]); ctx.lineCap = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = '#2B2340'; ctx.beginPath(); ctx.arc(cx, cy, 112, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  ['fire', 'water', 'grass', 'thunder', 'light', 'dark'].forEach((k, i) => {
+    const a = (-90 + i * 60) * Math.PI / 180, x = cx + 112 * Math.cos(a), y = cy + 112 * Math.sin(a);
+    ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.fillStyle = '#FFFDF7'; ctx.fill();
+    if (k === 'light') { glyph(ctx, ICON.light, x, y, 22, '#2B2340'); glyph(ctx, ICON.lightRays, x, y, 22, '#2B2340', true, 2); }
+    else glyph(ctx, ICON[k], x, y, 22, '#2B2340');
+  });
+  const starPts = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 36 : 80; starPts.push([cx + r * Math.cos(a), cy - 80 + 80 + r * Math.sin(a)]); }
+  const starPath = (dy) => { ctx.beginPath(); starPts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + dy) : ctx.moveTo(x, y + dy)); ctx.closePath(); };
+  const gold = lin(ctx, 0, cy - 80, 0, cy + 70, [[0, '#FFE98A'], [.5, '#FFC03D'], [1, '#FF8A3D']]);
+  ctx.lineJoin = 'round';
+  starPath(5); ctx.fillStyle = '#2B2340'; ctx.fill(); ctx.lineWidth = 16; ctx.strokeStyle = '#2B2340'; ctx.stroke();
+  starPath(0); ctx.fillStyle = gold; ctx.fill(); ctx.lineWidth = 7; ctx.stroke();
+  ctx.save(); ctx.translate(cx - 20.4, cy - 17.5); ctx.scale(1.7, 1.7); const hp = P2(ICON.heart); ctx.fillStyle = '#FFFDF7'; ctx.fill(hp); ctx.lineWidth = 2.2; ctx.strokeStyle = '#2B2340'; ctx.stroke(hp); ctx.restore();
+  const word = (text, R, size, spacing, bottom, shadow, outline, side) => {
+    ctx.save(); ctx.translate(0, shadow); arcText(ctx, text, cx, cy, R, size, spacing, bottom, ch => { ctx.lineJoin = 'round'; ctx.lineWidth = outline + 5; ctx.strokeStyle = '#2B2340'; ctx.strokeText(ch, 0, 0); ctx.fillStyle = '#2B2340'; ctx.fillText(ch, 0, 0); }); ctx.restore();
+    arcText(ctx, text, cx, cy, R, size, spacing, bottom, ch => { ctx.lineJoin = 'round'; ctx.lineWidth = outline; ctx.strokeStyle = '#2B2340'; ctx.strokeText(ch, 0, 0); ctx.fillStyle = '#2B2340'; ctx.fillText(ch, 0, 0); });
+    ctx.save(); ctx.translate(0, side); arcText(ctx, text, cx, cy, R, size, spacing, bottom, ch => { ctx.lineWidth = 4; ctx.strokeStyle = '#C24A1F'; ctx.strokeText(ch, 0, 0); ctx.fillStyle = '#C24A1F'; ctx.fillText(ch, 0, 0); }); ctx.restore();
+    arcText(ctx, text, cx, cy, R, size, spacing, bottom, (ch, s) => { ctx.fillStyle = lin(ctx, 0, -s * .72, 0, 0, [[0, '#FFE98A'], [.5, '#FFC03D'], [1, '#FF8A3D']]); ctx.fillText(ch, 0, 0); });
+  };
+  word('FAMI', 192, 120, 10, false, 9, 17, 6);
+  word('HEROES', 232, 84, 12, true, 9, 15, 6);
+  ctx.restore();
+}
+let backUrl = null;
+async function renderBack(widthPx) {
+  if (document.fonts && document.fonts.load) await Promise.race([document.fonts.load('400 120px "Lilita One"', 'FAMIHEROES').catch(() => {}), new Promise(r => setTimeout(r, 3000))]);
+  const s = widthPx / BW, c = document.createElement('canvas'); c.width = Math.round(BW * s); c.height = Math.round(BH * s);
+  const ctx = c.getContext('2d'); ctx.scale(s, s); drawBack(ctx); return c;
+}
+
+/* ---- 照片特效：疊在照片上的圖層 ---- */
+const EFFECTS = {
+  none: { name: '無' },
+  rays: { name: '光束', draw(ctx, x, y, w, h) {
+    const sc = ctx.getTransform().a || 1;
+    const c = document.createElement('canvas'); c.width = Math.ceil(w * sc); c.height = Math.ceil(h * sc);
+    const g = c.getContext('2d'); g.scale(sc, sc);
+    const ox = w * .88, oy = -h * .12, R = Math.hypot(w, h) * 1.6;
+    g.fillStyle = 'rgba(255,236,190,.36)';
+    for (let a = 70; a <= 200; a += 11) { g.beginPath(); g.moveTo(ox, oy); g.arc(ox, oy, R, a * Math.PI / 180, (a + 4) * Math.PI / 180); g.closePath(); g.fill(); }
+    g.globalCompositeOperation = 'destination-in';
+    const m = g.createLinearGradient(0, 0, 0, h); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(.8, 'rgba(0,0,0,0)');
+    g.fillStyle = m; g.fillRect(0, 0, w, h);
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.drawImage(c, x, y, w, h); ctx.restore();
+  } },
+  motes: { name: '光點', draw(ctx, x, y, w, h, r) {
+    ctx.save(); ctx.shadowColor = 'rgba(255,214,120,.95)'; ctx.shadowBlur = 8; ctx.fillStyle = 'rgba(255,232,170,.92)';
+    for (let i = 0; i < 38; i++) { ctx.beginPath(); ctx.arc(x + r() * w, y + r() * h, 1.4 + r() * 2.4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  } },
+  sparkle: { name: '星光', draw(ctx, x, y, w, h, r) {
+    ctx.save(); ctx.shadowColor = 'rgba(255,255,255,.95)'; ctx.shadowBlur = 10; ctx.fillStyle = 'rgba(255,255,255,.95)';
+    for (let i = 0; i < 13; i++) {
+      const px = x + r() * w, py = y + r() * h, s = 6 + r() * 13;
+      ctx.beginPath(); ctx.moveTo(px, py - s); ctx.quadraticCurveTo(px, py, px + s, py); ctx.quadraticCurveTo(px, py, px, py + s); ctx.quadraticCurveTo(px, py, px - s, py); ctx.quadraticCurveTo(px, py, px, py - s); ctx.fill();
+    }
+    ctx.restore();
+  } },
+  bubbles: { name: '泡泡', draw(ctx, x, y, w, h, r) {
+    ctx.save();
+    for (let i = 0; i < 11; i++) {
+      const px = x + r() * w, py = y + r() * h, rad = 8 + r() * 20;
+      ctx.beginPath(); ctx.arc(px, py, rad, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(px, py, rad * .62, Math.PI * 1.1, Math.PI * 1.45); ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+    }
+    ctx.restore();
+  } },
+  petals: { name: '花瓣', draw(ctx, x, y, w, h, r) {
+    ctx.save();
+    for (let i = 0; i < 18; i++) {
+      const px = x + r() * w, py = y + r() * h;
+      ctx.beginPath(); ctx.ellipse(px, py, 7 + r() * 4, 4 + r() * 2, r() * Math.PI, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,183,207,.92)'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(214,96,140,.55)'; ctx.stroke();
+    }
+    ctx.restore();
+  } }
+};
+const EFFECT_KEYS = ['none', 'rays', 'motes', 'sparkle', 'bubbles', 'petals'];
+
+/* ---- 照片濾鏡（逐像素處理，所有瀏覽器都一致） ---- */
+const filterCache = new WeakMap();
+function filtered(img, f) {
+  if (!img || !f || f === 'none') return img;
+  let m = filterCache.get(img); if (!m) { m = {}; filterCache.set(img, m); }
+  if (m[f]) return m[f];
+  const c = document.createElement('canvas'); c.width = img.naturalWidth || img.width; c.height = img.naturalHeight || img.height;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+  const k = v => v < 0 ? 0 : v > 255 ? 255 : v;
+  const con = (v, a) => (v - 128) * a + 128;
+  for (let i = 0; i < p.length; i += 4) {
+    let r = p[i], gg = p[i + 1], b = p[i + 2];
+    if (f === 'warm') { r = r * 1.06 + 8; gg = gg * 1.02 + 2; b = b * .9; }
+    else if (f === 'vintage') { const sr = .393 * r + .769 * gg + .189 * b, sg = .349 * r + .686 * gg + .168 * b, sb = .272 * r + .534 * gg + .131 * b; r = con(r * .65 + sr * .35, 1.06); gg = con(gg * .65 + sg * .35, 1.06); b = con(b * .65 + sb * .35, 1.06); }
+    else if (f === 'mono') { const y = con(.299 * r + .587 * gg + .114 * b, 1.08); r = gg = b = y; }
+    else if (f === 'vivid') { const y = .299 * r + .587 * gg + .114 * b; r = con(y + (r - y) * 1.3, 1.05); gg = con(y + (gg - y) * 1.3, 1.05); b = con(y + (b - y) * 1.3, 1.05); }
+    p[i] = k(r); p[i + 1] = k(gg); p[i + 2] = k(b);
+  }
+  g.putImageData(d, 0, 0);
+  return (m[f] = c);
+}
+
+function theme(card, skin) {
+  let t;
+  if (card.type === 'character') {
+    const a = ATTR[card.attr] || ATTR.fire;
+    t = { frame: a.frame || a.bg, pill: '#2B2340', pillInk: '#FFF9EF', tint: a.tint, ink: a.ink, box: a.tint, photoBorder: '#FFD36B', label: card.tag || '家人', icon: null };
+  } else {
+    const T = TYPE[card.type];
+    t = { frame: T.frame, pill: T.pill, pillInk: '#FFFFFF', tint: T.tint, ink: T.ink, box: T.box, photoBorder: T.photoBorder, label: T.label, icon: T.icon };
+  }
+  Object.assign(t, { panel: '#FFF9EF', text: '#2B2340', muted: '#5E5470', foot: '#6E6380', line: '#F0D9C4', star: '#F2B200', starStroke: '#9A6A00', stamp: '#FF9EC6', nameFont: s => F.sans(900, s), storyFont: s => F.hand(s) });
+  if (card.rarity === 'holo') Object.assign(t, { photoBorder: card.type === 'item' ? t.photoBorder : '#F2C14E', tint: '#FFF0C2', ink: '#6E4A00', foot: '#6E4A00' });
+  if (skin.theme) Object.assign(t, skin.theme(t));
+  return t;
+}
+const skinOf = card => (card.rarity === 'limited' && FRAMES[card.frame]) ? FRAMES[card.frame] : FRAMES.default;
+
+function pill(ctx, x, cy, text, bg, fg, fs, icon) {
+  ctx.font = F.sans(700, fs);
+  const tw = ctx.measureText(text).width, iw = icon ? fs + 6 : 0, hgt = fs + 16, w = tw + 24 + iw;
+  rr(ctx, x, cy - hgt / 2, w, hgt, hgt / 2); ctx.fillStyle = bg; ctx.fill();
+  if (icon) glyph(ctx, ICON[icon], x + 12 + fs / 2 - 2, cy, fs, fg, true, 2.2);
+  ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(text, x + 12 + iw, cy + fs * .36);
+  return w;
+}
+function labelTag(ctx, x, y, text, bg) { ctx.font = F.sans(700, 17); const w = ctx.measureText(text).width + 20; rr(ctx, x, y, w, 27, 6); ctx.fillStyle = bg; ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'left'; ctx.fillText(text, x + 10, y + 19.5); return w; }
+
+function rightBadge(card, th) {
+  if (card.type === 'mission' && Number(card.mission?.minutes) > 0) return { num: `${card.mission.minutes}:00`, icon: 'clock', bg: th.tint, fg: th.ink };
+  if (card.type === 'item') return { text: '裝備', bg: th.tint, fg: th.ink };
+  if (card.type === 'boost') return { text: '用一次', bg: th.tint, fg: th.ink };
+  if (card.type === 'scene' && card.rarity === 'limited') return { text: '限定', bg: '#E9B949', fg: '#4A2E00', ring: '#8A5A10' };
+  return null;
+}
+function drawBadge(ctx, right, cy, b) {
+  ctx.font = b.num ? F.num(700, 26) : F.sans(700, 18);
+  const label = b.num || b.text, tw = ctx.measureText(label).width, iw = b.icon ? 28 : 0, w = tw + iw + 24, hgt = 40, x = right - w;
+  rr(ctx, x, cy - hgt / 2, w, hgt, 10); ctx.fillStyle = b.bg; ctx.fill();
+  if (b.ring) { ctx.lineWidth = 2; ctx.strokeStyle = b.ring; rr(ctx, x + 1, cy - hgt / 2 + 1, w - 2, hgt - 2, 9); ctx.stroke(); }
+  if (b.icon) glyph(ctx, ICON[b.icon], x + 12 + 11, cy, 22, b.fg, true, 2);
+  ctx.fillStyle = b.fg; ctx.textAlign = 'left'; ctx.fillText(label, x + 12 + iw, cy + (b.num ? 9 : 6.5));
+  return w;
+}
+
+function drawHeader(ctx, card, th) {
+  const cy = 82; let x = CX;
+  x += pill(ctx, x, cy, th.label, th.pill, th.pillInk, 18, th.icon) + 12;
+  let right = CR;
+  if (card.type === 'character') {
+    attrBadge(ctx, card.attr, CR - 22, cy, 44, card.rarity === 'holo' ? '#F2C14E' : (ATTR[card.attr] || ATTR.fire).bg);
+    const hp = String(card.hp || 100), hx = CR - 44 - 14;
+    ctx.textAlign = 'right'; ctx.font = F.num(700, 50); ctx.fillStyle = th.text; ctx.fillText(hp, hx, cy + 17);
+    const nw = ctx.measureText(hp).width;
+    ctx.font = F.num(600, 20); ctx.fillStyle = '#B8432A'; ctx.fillText('HP', hx - nw - 4, cy + 17);
+    right = hx - nw - 4 - ctx.measureText('HP').width - 12;
+  } else {
+    const b = rightBadge(card, th);
+    if (b) right = CR - drawBadge(ctx, CR, cy, b) - 12;
+  }
+  ctx.textAlign = 'left';
+  const name = card.name || '未命名', maxW = right - x;
+  const s = fitSize(ctx, name, th.nameFont, 40, 22, maxW);
+  ctx.font = th.nameFont(s); ctx.fillStyle = th.text; ctx.fillText(clip(ctx, name, maxW), x, cy + s * .36);
+}
+function drawCover(ctx, img, x, y, w, h) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  const s = Math.max(w / iw, h / ih), sw = w / s, sh = h / s;
+  ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, x, y, w, h);
+}
+function drawPhoto(ctx, card, img, th, skin, y) {
+  const box = PHOTO_BOX[card.type], ins = photoInset(card.type);
+  const r = skin.id === 'ruins' ? 10 : card.type === 'item' ? 6 : 14;
+  const ix = CX + ins, iy = y + ins, iw = CW - ins * 2, ih = box - ins * 2;
+  ctx.save(); rr(ctx, ix, iy, iw, ih, Math.max(0, r - ins)); ctx.clip();
+  if (img) drawCover(ctx, img, ix, iy, iw, ih);
+  else {
+    ctx.fillStyle = th.box; ctx.fillRect(ix, iy, iw, ih); ctx.fillStyle = th.line;
+    for (let yy = iy + 11; yy < iy + ih; yy += 22) for (let xx = ix + 11; xx < ix + iw; xx += 22) { ctx.beginPath(); ctx.arc(xx, yy, 2, 0, Math.PI * 2); ctx.fill(); }
+    glyph(ctx, ICON.camera, ix + iw / 2, iy + ih / 2 - 16, 64, th.ink, true, 1.6);
+    ctx.font = F.sans(700, 22); ctx.fillStyle = th.ink; ctx.textAlign = 'center'; ctx.fillText('放入照片', ix + iw / 2, iy + ih / 2 + 44); ctx.textAlign = 'left';
+  }
+  const fx = EFFECTS[card.effect];
+  if (fx && fx.draw) fx.draw(ctx, ix, iy, iw, ih, rng(hash(card.id)));
+  ctx.restore();
+  if (card.type === 'item') {
+    const dark = skin.id === 'ruins' ? '#5A3516' : '#8A5A2B', wood = skin.id === 'ruins' ? '#C98B4A' : '#E9C894';
+    ctx.lineWidth = 3; ctx.strokeStyle = dark; rr(ctx, CX + 1.5, y + 1.5, CW - 3, box - 3, 6); ctx.stroke();
+    ctx.lineWidth = 10; ctx.strokeStyle = wood; rr(ctx, CX + 8, y + 8, CW - 16, box - 16, 4); ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = dark; rr(ctx, CX + 13.5, y + 13.5, CW - 27, box - 27, 2); ctx.stroke();
+  } else {
+    const lw = skin.id === 'ruins' ? 5 : 6;
+    ctx.lineWidth = lw; ctx.strokeStyle = th.photoBorder; rr(ctx, CX + lw / 2, y + lw / 2, CW - lw, box - lw, r - lw / 2); ctx.stroke();
+  }
+  return y + box;
+}
+function stripText(card, skin) {
+  const typeName = card.type === 'character' ? '角色卡' : TYPE[card.type].name + '卡';
+  if (card.reward && card.reward.series) { const s = seriesList().find(x => x.id === card.reward.series); return `${typeName} · 集滿${s ? s.name : ''}系列的獎勵`; }
+  if (card.rarity === 'limited' && skin.id !== 'default') return `${typeName} · ${skin.name}系列`;
+  const dp = [card.date, card.place].filter(Boolean).map(s => ' · ' + s).join('');
+  if (card.type === 'mission') return '任務卡 · 可重複使用';
+  if (card.type === 'boost') return '強化卡 · 用完放到棄牌區';
+  if (card.type === 'item') { const it = card.item || {}; return ['作者：' + (it.author || '—'), it.age, card.date].filter(Boolean).join(' · '); }
+  return typeName + dp;
+}
+function drawStrip(ctx, card, th, skin, y) {
+  rr(ctx, CX, y, CW, 34, skin.id === 'ruins' ? 8 : 10); ctx.fillStyle = th.tint; ctx.fill();
+  let rx = CR - 14;
+  if (card.type === 'mission') {
+    const n = Math.max(1, Math.min(3, Number(card.mission?.difficulty) || 1)), col = skin.id === 'ruins' ? th.star : '#E0457F';
+    for (let i = 2; i >= 0; i--) { star(ctx, rx - 10, y + 17, 20, col, null, i >= n); rx -= 24; }
+    ctx.font = F.sans(500, 18); ctx.fillStyle = th.ink; ctx.textAlign = 'right'; ctx.fillText('難度', rx - 2, y + 23); rx -= ctx.measureText('難度').width + 4;
+  } else {
+    const n = card.rarity === 'holo' || card.rarity === 'limited' ? 3 : 1;
+    for (let i = 0; i < n; i++) { star(ctx, rx - 11, y + 17, 22, th.star, th.starStroke); rx -= 24; }
+  }
+  ctx.font = F.sans(500, 18); ctx.fillStyle = th.ink; ctx.textAlign = 'left';
+  ctx.fillText(clip(ctx, stripText(card, skin), rx - CX - 14 - 10), CX + 14, y + 23);
+  return y + 34;
+}
+const fmtDelta = d => (Number(d) > 0 ? '+' : '−') + Math.abs(Number(d));
+const SECTION = {
+  character(ctx, card, th, skin, y) {
+    const skills = ((card.skillData && card.skillData.length) ? card.skillData : (card.skills || []).map(id => skillById(id))).filter(Boolean).slice(0, 2);
+    const maxCost = Math.max(1, ...skills.map(s => s.cost.length));
+    const nameX = CX + 4 + maxCost * 34 + 8;
+    if (!skills.length) { ctx.font = F.sans(700, 22); ctx.fillStyle = th.muted; ctx.fillText('請選擇招式', CX + 4, y + 30); y += 50; }
+    for (const s of skills) {
+      const fx = s.effect && s.effect !== '—', rh = fx ? 72 : 50, cy = y + (fx ? 24 : 22);
+      s.cost.forEach((c, i) => attrBadge(ctx, c, CX + 4 + 15 + i * 34, cy, 30));
+      ctx.font = F.num(700, 46); ctx.textAlign = 'right'; ctx.fillStyle = th.text; ctx.fillText(s.dmg, CR - 4, cy + 16);
+      const dw = ctx.measureText(s.dmg).width; ctx.textAlign = 'left';
+      const avail = CR - 4 - dw - 12 - nameX, fs = fitSize(ctx, s.name, z => F.sans(900, z), 30, 20, avail);
+      ctx.font = F.sans(900, fs); ctx.fillStyle = th.text; ctx.fillText(s.name, nameX, cy + fs * .36);
+      if (fx) { ctx.font = F.sans(500, 19); ctx.fillStyle = th.muted; ctx.fillText(clip(ctx, s.effect, avail), nameX, cy + 36); }
+      y += rh; dashed(ctx, CX, y, CR, th.line); y += 10;
+    }
+    const weak = WEAK_TO(card.attr), res = RESIST(card.attr), cy = y + 14; let x = CX;
+    const part = (label, key, val) => {
+      ctx.font = F.sans(700, 18); ctx.fillStyle = th.muted; ctx.fillText(label, x, cy + 6.5); x += ctx.measureText(label).width + 8;
+      attrBadge(ctx, key, x + 13, cy, 26); x += 34;
+      ctx.font = F.num(600, 22); ctx.fillStyle = th.text; ctx.fillText(val, x, cy + 8); x += ctx.measureText(val).width + 28;
+    };
+    if (weak) part('弱點', weak, '×2');
+    if (res) part('抗性', res, '−20');
+    return y + 30 + 12;
+  },
+  scene(ctx, card, th, skin, y) {
+    const lines = (card.sceneEffects || []).filter(e => e && e.attr && Number(e.delta));
+    const hgt = 14 + 27 + 10 + Math.max(1, lines.length) * 42 + 8;
+    rr(ctx, CX, y, CW, hgt, 14); ctx.fillStyle = th.box; ctx.fill();
+    if (skin.id === 'ruins') { ctx.save(); ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = '#B98A55'; rr(ctx, CX + 1, y + 1, CW - 2, hgt - 2, 13); ctx.stroke(); ctx.restore(); }
+    labelTag(ctx, CX + 16, y + 14, '場地效果', th.pill);
+    let ly = y + 14 + 27 + 10;
+    if (!lines.length) { ctx.font = F.sans(500, 20); ctx.fillStyle = th.muted; ctx.fillText('沒有場地效果', CX + 16, ly + 26); }
+    for (const e of lines) {
+      attrBadge(ctx, e.attr, CX + 16 + 16, ly + 17, 32);
+      ctx.font = F.sans(700, 24); ctx.fillStyle = th.text; ctx.textAlign = 'left';
+      ctx.fillText(clip(ctx, `${ATTR[e.attr].name}屬性角色的招式傷害 ${fmtDelta(e.delta)}`, CW - 80), CX + 16 + 32 + 12, ly + 25); ly += 42;
+    }
+    return y + hgt + 12;
+  },
+  mission(ctx, card, th, skin, y) {
+    const m = card.mission || {};
+    ctx.font = F.sans(700, 26); ctx.fillStyle = th.text; ctx.textAlign = 'left';
+    const lines = wrap(ctx, m.text || '寫下任務內容', CW).slice(0, 2);
+    lines.forEach((l, i) => ctx.fillText(l, CX, y + 27 + i * 36)); y += lines.length * 36 + 12;
+    rr(ctx, CX, y, CW, 58, 14); ctx.fillStyle = th.box; ctx.fill();
+    const lw = labelTag(ctx, CX + 16, y + 15.5, '完成獎勵', th.pill);
+    star(ctx, CX + 16 + lw + 14 + 17, y + 29, 34, '#F2B200', '#9A6A00');
+    ctx.font = F.sans(900, 25); ctx.fillStyle = th.text; ctx.fillText(`星星 ×${Number(m.reward) || 1}`, CX + 16 + lw + 14 + 42, y + 38);
+    y += 58 + 12;
+    ctx.font = F.sans(700, 18); ctx.fillStyle = th.muted; ctx.fillText('完成蓋章', CX, y + 18); y += 28;
+    ctx.save(); ctx.setLineDash([7, 6]); ctx.lineWidth = 3; ctx.strokeStyle = th.stamp;
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(CX + 36 + i * ((CW - 72) / 4), y + 36, 34, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+    return y + 72 + 12;
+  },
+  item(ctx, card, th, skin, y) {
+    const fx = card.item?.effect || ITEM_EFFECTS[0], hgt = 132;
+    rr(ctx, CX, y, CW, hgt, 14); ctx.fillStyle = th.box; ctx.fill();
+    labelTag(ctx, CX + 16, y + 14, '裝備效果', th.pill);
+    glyph(ctx, ICON.heart, CX + 16 + 16, y + 66, 32, '#FF6B7A');
+    const fs = fitSize(ctx, fx, z => F.sans(900, z), 26, 18, CW - 80);
+    ctx.font = F.sans(900, fs); ctx.fillStyle = th.text; ctx.fillText(fx, CX + 16 + 32 + 10, y + 66 + fs * .36);
+    ctx.font = F.sans(500, 18); ctx.fillStyle = th.muted; ctx.fillText('每個角色只能裝備 1 個道具', CX + 16, y + 114);
+    return y + hgt + 12;
+  },
+  boost(ctx, card, th, skin, y) {
+    const fx = card.boost?.effect || BOOST_EFFECTS[0];
+    ctx.font = F.sans(900, 27); const lines = wrap(ctx, fx, CW - 32 - 52).slice(0, 2);
+    const hgt = 14 + 27 + 12 + lines.length * 37 + 14;
+    rr(ctx, CX, y, CW, hgt, 14); ctx.fillStyle = th.box; ctx.fill();
+    labelTag(ctx, CX + 16, y + 14, '效果', th.pill);
+    const ty = y + 14 + 27 + 12;
+    glyph(ctx, ICON.heart, CX + 16 + 20, ty + (lines.length * 37) / 2, 40, '#FF6B7A');
+    ctx.font = F.sans(900, 27); ctx.fillStyle = th.text;
+    lines.forEach((l, i) => ctx.fillText(l, CX + 16 + 52, ty + 27 + i * 37));
+    return y + hgt + 12;
+  }
+};
+function drawStory(ctx, card, th, y, limit) {
+  const text = String(card.story || '').trim(); if (!text) return;
+  ctx.font = th.storyFont(21);
+  let lines = wrap(ctx, text, CW);
+  const room = Math.floor((limit - y - 12) / 29);
+  if (room < 1) return;
+  lines = lines.slice(0, Math.min(2, room));
+  ctx.lineWidth = 2; ctx.strokeStyle = th.line; ctx.beginPath(); ctx.moveTo(CX, y + 1); ctx.lineTo(CR, y + 1); ctx.stroke();
+  ctx.fillStyle = th.muted; ctx.textAlign = 'left';
+  lines.forEach((l, i) => ctx.fillText(l, CX, y + 32 + i * 29));
+}
+function drawFooter(ctx, card, th, skin) {
+  const total = (DATA.settings && DATA.settings.total) || 50;
+  ctx.font = F.num(card.rarity === 'normal' ? 500 : 600, 16); ctx.fillStyle = th.foot; ctx.textAlign = 'left';
+  ctx.fillText(`${card.reward ? '★ ' : ''}${card.status === 'draft' ? '---' : pad3(card.no)} / ${pad3(total)}`, CX, 828);
+  let label = card.type === 'character' ? '普通' : TYPE[card.type].label;
+  if (card.rarity === 'holo') label = '閃卡';
+  if (card.rarity === 'limited') label = '限定 · ' + skin.name;
+  if (card.variantOf) label = '異圖 · ' + label;
+  ctx.textAlign = 'right'; ctx.fillText(label, CR, 828); ctx.textAlign = 'left';
+}
+function drawCard(ctx, card, img, opt = {}) {
+  const skin = skinOf(card), th = theme(card, skin);
+  ctx.save(); ctx.textBaseline = 'alphabetic';
+  if (card.rarity === 'holo') drawHoloFrame(ctx);
+  else if (skin.drawFrame) skin.drawFrame(ctx);
+  else { ctx.fillStyle = th.frame; ctx.fillRect(0, 0, BW, BH); }
+  rr(ctx, PANEL.x, PANEL.y, PANEL.w, PANEL.h, skin.panelR || 20); ctx.fillStyle = th.panel; ctx.fill();
+  if (card.rarity === 'holo') { ctx.lineWidth = 4; ctx.strokeStyle = '#F2C14E'; rr(ctx, PANEL.x - 2, PANEL.y - 2, PANEL.w + 4, PANEL.h + 4, 22); ctx.stroke(); }
+  if (skin.panelBorder) { ctx.lineWidth = 3; ctx.strokeStyle = skin.panelBorder; rr(ctx, PANEL.x + 1.5, PANEL.y + 1.5, PANEL.w - 3, PANEL.h - 3, (skin.panelR || 20) - 1.5); ctx.stroke(); }
+  if (skin.drawDecor) skin.drawDecor(ctx);
+  drawHeader(ctx, card, th);
+  let y = drawPhoto(ctx, card, img, th, skin, 124) + 12;
+  y = drawStrip(ctx, card, th, skin, y) + 12;
+  y = (SECTION[card.type] || SECTION.character)(ctx, card, th, skin, y);
+  drawStory(ctx, card, th, y, 806);
+  drawFooter(ctx, card, th, skin);
+  if (card.rarity === 'holo' && opt.sheen !== false) drawSheen(ctx);
+  if (opt.silhouette) {
+    ctx.fillStyle = 'rgba(28,22,42,.92)'; ctx.fillRect(0, 0, BW, BH);
+    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = F.num(700, 260); ctx.fillText('?', BW / 2, BH / 2 + 80);
+    ctx.font = F.num(600, 40); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('No.' + pad3(card.no), BW / 2, BH / 2 + 190); ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+/* ---- 字型：中文字型按字切片載入，畫之前先載入用到的字 ---- */
+const FONT_SPECS = ['900 40px "Noto Sans TC"', '700 30px "Noto Sans TC"', '500 18px "Noto Sans TC"', '400 21px "LXGW WenKai TC"', '700 40px "Fredoka"', '600 20px "Fredoka"', '500 16px "Fredoka"', '900 40px "Noto Serif TC"', '700 19px "Noto Serif TC"'];
+const FIXED_TEXT = (() => {
+  const parts = ['0123456789HP×−+/:. ★角色卡場景任務道具強化家人朋友寵物弱點抗性場地效果沒有完成獎勵星星蓋章裝備效果每個角色只能裝備個道具用一次限定系列普通閃卡難度可重複使用用完放到棄牌區作者放入照片未命名請選擇招式屬性的招式傷害寫下任務內容集滿的No?…'];
+  Object.values(ATTR).forEach(a => parts.push(a.name)); Object.values(FRAMES).forEach(f => parts.push(f.name));
+  Object.values(SKILL).forEach(s => parts.push(s.name, s.effect)); parts.push(...ITEM_EFFECTS, ...BOOST_EFFECTS);
+  return [...new Set(parts.join(''))].join('');
+})();
+const fontDone = new Set();
+async function ensureFonts(card) {
+  if (!document.fonts || !document.fonts.load) return;
+  const txt = [card.name, card.tag, card.place, card.date, card.story, card.mission?.text, card.item?.author, card.item?.age, card.item?.effect, card.boost?.effect, ...seriesList().map(s => s.name), ...(card.skillData || []).flatMap(s => [s.name, s.effect]), ...(card.skills || []).map(id => skillById(id)).filter(Boolean).flatMap(s => [s.name, s.effect])].filter(Boolean).join('');
+  const need = [...new Set(FIXED_TEXT + txt)].filter(ch => !fontDone.has(ch)).join('');
+  if (!need) return;
+  await Promise.race([Promise.all(FONT_SPECS.map(f => document.fonts.load(f, need).catch(() => {}))), new Promise(r => setTimeout(r, 5000))]);
+  for (const ch of need) fontDone.add(ch);
+}
+async function renderCard(card, img, widthPx, opt = {}) {
+  await ensureFonts(card);
+  const s = widthPx / BW, c = document.createElement('canvas');
+  c.width = Math.round(BW * s); c.height = Math.round(BH * s);
+  const ctx = c.getContext('2d'); ctx.scale(s, s);
+  drawCard(ctx, card, img ? filtered(img, card.filter) : null, opt);
+  return c;
+}
+
+/* ============================================================
+   資料層：示範（這台裝置）或 Google 後台
+   ============================================================ */
+const DEFAULT_SETTINGS = () => ({ series: [{ id: 'base', name: '基本', total: 50 }] });
+function normSettings(s) {
+  s = { ...(s || {}) };
+  if (!Array.isArray(s.series) || !s.series.length) s.series = [{ id: 'base', name: '基本' }];
+  if (!s.series.some(x => x.id === 'base')) s.series.unshift({ id: 'base', name: '基本' });
+  s.total = Number(s.total) || Number(s.seriesTotal) || 50;
+  if (!Array.isArray(s.skills) || !s.skills.length) s.skills = clone(DEFAULT_SKILLS);
+  return s;
+}
+let AUTH = null, ROLE = null, DATA = { cards: [], kids: [], owned: [], settings: DEFAULT_SETTINGS() }, KID = null;
+const nextNoIn = cards => Math.max(0, ...cards.map(c => c.no || 0)) + 1;
+
+const LocalStore = {
+  async state() {
+    let s = await kv.get('demo-state');
+    if (!s) { s = seedDemo(); await kv.set('demo-state', s); }
+    return s;
+  },
+  async bootstrap() { const s = clone(await this.state()); if (ROLE !== 'editor') s.cards = s.cards.filter(c => c.status !== 'draft'); return { ...s, role: ROLE }; },
+  async getPhotos(ids) { const out = {}; for (const id of ids) { const d = await kv.get('photo:' + id); if (d) out[id] = d; } return out; },
+  async saveCard(card, photo) {
+    const s = await this.state();
+    const prev = s.cards.find(c => c.id === card.id);
+    if (photo) { const pid = 'p_' + uid(); await kv.set('photo:' + pid, photo); if (prev && prev.photoId) kv.del('photo:' + prev.photoId); card.photoId = pid; }
+    else card.photoId = prev ? prev.photoId : (card.photoId || '');
+    card.series = card.series || 'base';
+    card.no = card.status === 'draft' ? 0 : (prev && prev.status !== 'draft' && prev.no ? prev.no : nextNoIn(s.cards));
+    card.updatedAt = Date.now();
+    s.cards = s.cards.filter(c => c.id !== card.id).concat(card);
+    await kv.set('demo-state', s); return card;
+  },
+  async deleteCard(id) { const s = await this.state(); const c = s.cards.find(x => x.id === id); if (c && c.photoId) kv.del('photo:' + c.photoId); s.cards = s.cards.filter(x => x.id !== id); s.owned = s.owned.filter(o => o.cardId !== id); await kv.set('demo-state', s); return true; },
+  async saveKid(kid) { const s = await this.state(); s.kids = s.kids.filter(k => k.id !== kid.id).concat(kid); await kv.set('demo-state', s); return kid; },
+  async deleteKid(id) { const s = await this.state(); s.kids = s.kids.filter(k => k.id !== id); s.owned = s.owned.filter(o => o.kidId !== id); await kv.set('demo-state', s); return true; },
+  async setOwned(kidId, cardId, owned) { const s = await this.state(); s.owned = s.owned.filter(o => !(o.kidId === kidId && o.cardId === cardId)); if (owned) s.owned.push({ kidId, cardId, at: Date.now(), seenAt: 0 }); await kv.set('demo-state', s); return true; },
+  async markSeen(kidId, cardId) { const s = await this.state(); s.owned.forEach(o => { if (o.kidId === kidId && o.cardId === cardId) o.seenAt = Date.now(); }); await kv.set('demo-state', s); return true; },
+  async saveSettings(settings) { const s = await this.state(); s.settings = normSettings({ ...s.settings, ...settings }); await kv.set('demo-state', s); return s.settings; }
+};
+async function api(action, payload = {}) {
+  let res;
+  try { res = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, auth: AUTH, ...payload }) }); }
+  catch (e) { throw Object.assign(new Error('連不上後台，請確認網路'), { code: 'network' }); }
+  let j; try { j = await res.json(); } catch (e) { throw Object.assign(new Error('後台回應格式不對，請確認 Apps Script 已部署成網頁應用程式'), { code: 'bad_response' }); }
+  if (!j.ok) { const err = Object.assign(new Error(j.error || '發生錯誤'), { code: j.code }); if (j.code === 'auth') onAuthExpired(); throw err; }
+  return j.data;
+}
+const RemoteStore = {
+  bootstrap: () => api('bootstrap'),
+  getPhotos: ids => api('getPhotos', { ids }),
+  saveCard: (card, photo) => api('saveCard', { card, photo: photo ? photo.split(',')[1] : null }),
+  deleteCard: id => api('deleteCard', { id }),
+  saveKid: kid => api('saveKid', { kid }),
+  deleteKid: id => api('deleteKid', { id }),
+  setOwned: (kidId, cardId, owned) => api('setOwned', { kidId, cardId, owned }),
+  markSeen: (kidId, cardId) => api('markSeen', { kidId, cardId }),
+  saveSettings: settings => api('saveSettings', { settings })
+};
+const store = DEMO ? LocalStore : RemoteStore;
+
+function seedDemo() {
+  const now = Date.now();
+  const base = { series: 'base', reward: null, tag: '家人', attr: 'fire', hp: 100, skills: [], rarity: 'normal', frame: 'ruins', effect: 'none', filter: 'none', date: ymNow(), place: '', story: '', photoId: '', sceneEffects: [], mission: {}, item: {}, boost: {}, updatedAt: now };
+  const cards = [
+    { ...base, id: 'c_demo1', no: 1, type: 'character', name: '超人爸爸（範例）', attr: 'fire', hp: 120, skills: ['fly', 'hug2'], story: '換上自己的照片，就是你家的第一張卡。' },
+    { ...base, id: 'c_demo2', no: 2, type: 'scene', name: '海邊沙灘（範例）', sceneEffects: [{ attr: 'water', delta: 10 }, { attr: 'fire', delta: -10 }], effect: 'sparkle' },
+    { ...base, id: 'c_demo3', no: 3, type: 'mission', name: '看書 10 分鐘', mission: { text: '安靜坐好，自己翻書看 10 分鐘。', minutes: 10, difficulty: 2, reward: 1 } },
+    { ...base, id: 'c_demo4', no: 4, type: 'character', name: '全家福（範例）', attr: 'grass', hp: 150, skills: ['forest', 'family'], rarity: 'holo' },
+    { ...base, id: 'c_demo5', no: 5, type: 'character', name: '冠軍老大（範例）', attr: 'light', hp: 130, skills: ['rainbow', 'family'], rarity: 'limited', frame: 'gold', effect: 'sparkle', reward: { series: 'base' } }
+  ];
+  return { cards, kids: [{ id: 'k_demo', name: '老大', color: '#4FB3F6' }], owned: [{ kidId: 'k_demo', cardId: 'c_demo1', at: now, seenAt: now }, { kidId: 'k_demo', cardId: 'c_demo4', at: now, seenAt: 0 }], settings: { series: [{ id: 'base', name: '基本', total: 50 }, { id: 's_kyushu', name: '九州', total: 20 }] } };
+}
+
+/* ---- 照片載入與快取 ---- */
+const IMG = new Map();
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+async function loadPhotos(ids) {
+  const need = [...new Set(ids.filter(id => id && !IMG.has(id)))]; if (!need.length) return;
+  const urls = {}, miss = [];
+  for (const id of need) { const d = DEMO ? null : await kv.get('pc:' + id); if (d) urls[id] = d; else miss.push(id); }
+  for (let i = 0; i < miss.length; i += 8) {
+    try { const part = await store.getPhotos(miss.slice(i, i + 8)); for (const [id, d] of Object.entries(part || {})) { urls[id] = d; if (!DEMO) kv.set('pc:' + id, d); } }
+    catch (e) { console.warn(e); }
+  }
+  await Promise.all(Object.entries(urls).map(async ([id, d]) => { try { IMG.set(id, await loadImg(d)); } catch (e) {} }));
+}
+const thumbCache = new Map();
+async function thumb(card, w, sil) {
+  const ser = seriesOf(card);
+  const key = `${card.id}:${card.updatedAt}:${card.photoId}:${w}:${sil ? 1 : 0}:${ser.id}:${DATA.settings.total}`;
+  if (thumbCache.has(key)) return thumbCache.get(key);
+  if (card.photoId && !IMG.has(card.photoId)) await loadPhotos([card.photoId]);
+  const c = await renderCard(card, IMG.get(card.photoId), w, { silhouette: sil });
+  const url = c.toDataURL('image/jpeg', .9); thumbCache.set(key, url); return url;
+}
+
+/* ============================================================
+   登入與畫面切換
+   ============================================================ */
+const VIEWS = ['login', 'kidpick', 'dex', 'cards', 'editor', 'print', 'kids'];
+let current = 'login';
+function show(v) {
+  current = v;
+  VIEWS.forEach(n => { $('#v-' + n).hidden = n !== v; });
+  $('#tabbar').hidden = ROLE !== 'editor' || v === 'login';
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.tab === v ? 'page' : 'false'));
+  $('#mini').hidden = v !== 'editor';
+  window.scrollTo(0, 0);
+  renderWho();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => go(t.dataset.tab)));
+function go(v) {
+  if (v === 'editor') { if (!draft) openEditor(null); else { show('editor'); renderEditor(); } return; }
+  show(v); RENDER[v] && RENDER[v]();
+}
+
+function renderWho() {
+  const w = $('#who'); w.textContent = '';
+  if (ROLE === 'editor') w.append(h('span', { text: '爸媽模式' }), h('button', { class: 'btn small ghost', type: 'button', onclick: logout }, '登出'));
+  else if (ROLE === 'viewer' && KID && current === 'dex') w.append(h('button', { class: 'btn small ghost', type: 'button', onclick: () => { KID = null; saveDevice({ mode: 'kid', pw: AUTH?.familyPassword || '' }); renderKidPick(); show('kidpick'); } }, '換人'), h('button', { class: 'btn small ghost', type: 'button', onclick: logout }, '家長'));
+}
+const saveDevice = v => lsSet('fc-device', v);
+function logout() {
+  saveDevice(null); AUTH = null; ROLE = null; KID = null; draft = null;
+  try { if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect(); } catch (e) {}
+  renderLogin(); show('login');
+}
+function onAuthExpired() {
+  if (ROLE === 'editor') { toast('登入過期了，請重新登入'); AUTH = null; renderLogin(); show('login'); }
+  else if (ROLE === 'viewer') { toast('家庭密碼不對或已更換'); saveDevice(null); AUTH = null; ROLE = null; renderLogin(); show('login'); }
+}
+
+async function loadData() {
+  const d = await store.bootstrap();
+  DATA = { cards: d.cards || [], kids: d.kids || [], owned: d.owned || [], settings: normSettings(d.settings) };
+  if (d.role) ROLE = d.role;
+  lsSet('fc-cache', { ...DATA, role: ROLE });
+}
+
+async function renderLogin() {
+  const v = $('#v-login'); v.textContent = '';
+  const fan = h('div', { class: 'fan', 'aria-hidden': 'true' });
+  const err = h('p', { class: 'err', id: 'loginErr', role: 'alert' });
+  const parentBtn = h('button', { class: 'btn primary', type: 'button' }, '爸爸媽媽登入');
+  const kidBtn = h('button', { class: 'btn accent', type: 'button' }, '小朋友看圖鑑');
+  const gbox = h('div', { id: 'gbtn', hidden: true, style: 'display:flex;justify-content:center;min-height:44px' });
+  const pwBox = h('form', { class: 'login-actions', hidden: true },
+    h('div', { class: 'field' }, h('label', { for: 'famPw', text: '家庭密碼' }), h('input', { type: 'password', id: 'famPw', autocomplete: 'current-password', required: true })),
+    h('button', { class: 'btn accent', type: 'submit' }, '進入圖鑑'));
+  v.append(h('div', { class: 'login' }, fan, h('h1', { text: 'Fami Heroes' }), h('p', { class: 'sub', text: '家庭戰鬥卡：用家裡的照片和孩子的作品，做成真的能對戰的卡片。' }), h('div', { class: 'login-actions' }, parentBtn, gbox, kidBtn), pwBox, err));
+  parentBtn.onclick = async () => {
+    err.textContent = '';
+    if (DEMO) { ROLE = 'editor'; await loadData(); saveDevice({ mode: 'parent' }); enterParent(); return; }
+    if (!CONFIG.GOOGLE_CLIENT_ID) { err.textContent = '還沒填 GOOGLE_CLIENT_ID，請照部署說明設定'; return; }
+    gbox.hidden = false; parentBtn.hidden = true;
+    try { await startGoogle(gbox); } catch (e) { err.textContent = e.message; }
+  };
+  kidBtn.onclick = async () => {
+    err.textContent = '';
+    if (DEMO) { ROLE = 'viewer'; AUTH = null; await loadData(); ROLE = 'viewer'; saveDevice({ mode: 'kid', pw: '' }); renderKidPick(); show('kidpick'); return; }
+    pwBox.hidden = false; kidBtn.hidden = true; $('#famPw').focus();
+  };
+  pwBox.onsubmit = async e => {
+    e.preventDefault(); err.textContent = '';
+    AUTH = { familyPassword: $('#famPw').value.trim() };
+    try { await loadData(); ROLE = 'viewer'; saveDevice({ mode: 'kid', pw: AUTH.familyPassword }); renderKidPick(); show('kidpick'); }
+    catch (x) { err.textContent = x.code === 'auth' ? '家庭密碼不對，再試一次' : x.message; AUTH = null; }
+  };
+  // 登入頁的三張示範卡
+  const samples = (DATA.cards.length ? DATA.cards : seedDemo().cards).slice(0, 3);
+  samples.forEach(async (c, i) => {
+    const url = await thumb(c, 200, false);
+    const img = h('img', { src: url, alt: '' });
+    img.style.cssText = `position:absolute;left:50%;top:${i === 1 ? 0 : 14}px;width:100px;border-radius:5px;box-shadow:var(--shadow);transform:translateX(-50%) translateX(${(i - 1) * 62}px) rotate(${(i - 1) * 10}deg);z-index:${i === 1 ? 2 : 1}`;
+    fan.append(img);
+  });
+}
+function loadGis() {
+  return new Promise((res, rej) => {
+    if (window.google?.accounts?.id) return res();
+    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onload = () => res(); s.onerror = () => rej(new Error('Google 登入元件載入失敗')); document.head.append(s);
+  });
+}
+async function startGoogle(box) {
+  await loadGis();
+  google.accounts.id.initialize({ client_id: CONFIG.GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true, cancel_on_tap_outside: false });
+  box.textContent = '';
+  google.accounts.id.renderButton(box, { theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with', locale: 'zh-TW' });
+  google.accounts.id.prompt();
+}
+async function onCredential(resp) {
+  AUTH = { idToken: resp.credential };
+  try { await loadData(); if (ROLE !== 'editor') throw new Error('這個帳號沒有編輯權限'); saveDevice({ mode: 'parent' }); enterParent(); }
+  catch (e) { const el = $('#loginErr'); if (el) el.textContent = e.message; AUTH = null; }
+}
+function enterParent() { ROLE = 'editor'; go('cards'); }
+
+/* ============================================================
+   孩子：選人、圖鑑
+   ============================================================ */
+function avatar(kid, sm) { return h('span', { class: 'avatar' + (sm ? ' sm' : ''), style: `background:${kid.color || '#4FB3F6'}`, text: (kid.name || '?').slice(0, 1) }); }
+function renderKidPick() {
+  const v = $('#v-kidpick'); v.textContent = '';
+  v.append(h('div', { class: 'view-head' }, h('h2', { text: '你是誰？' })));
+  if (!DATA.kids.length) { v.append(h('div', { class: 'empty' }, h('p', { text: '還沒有孩子的資料。請爸媽登入後，在「設定」頁新增。' }), h('button', { class: 'btn', type: 'button', onclick: logout }, '回到登入'))); return; }
+  v.append(h('div', { class: 'kids' }, DATA.kids.map(k => h('button', { class: 'kid-btn', type: 'button', onclick: () => { KID = k; saveDevice({ mode: 'kid', pw: AUTH?.familyPassword || '', kidId: k.id }); renderDex(); show('dex'); } }, avatar(k), k.name))));
+}
+let dexFilter = 'all';
+const ownedSet = kidId => new Map(DATA.owned.filter(o => o.kidId === kidId).map(o => [o.cardId, o.at]));
+const sortedCards = () => DATA.cards.slice().sort((a, b) => (a.no || 0) - (b.no || 0));
+function filterChips(value, onPick) {
+  const opts = [['all', '全部'], ...TYPE_KEYS.map(k => [k, TYPE[k].name])];
+  return h('div', { class: 'chips', role: 'group', 'aria-label': '卡片種類' }, opts.map(([k, l]) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(value === k), onclick: () => onPick(k) }, l)));
+}
+async function fillTiles(list) { for (const [img, card, sil] of list) img.src = await thumb(card, 300, sil); }
+const sidOf = c => seriesOf(c).id;
+const finals = () => DATA.cards.filter(c => c.status !== 'draft');
+const ownsCard = (kidId, cardId) => DATA.owned.some(o => o.kidId === kidId && o.cardId === cardId);
+function seriesProgress(kidId, sid) {
+  const pool = finals().filter(c => sidOf(c) === sid && !c.reward);
+  const have = pool.filter(c => ownsCard(kidId, c.id)).length;
+  return { have, total: pool.length, left: pool.length - have, done: pool.length > 0 && have === pool.length };
+}
+const byNo = (a, b) => (a.reward ? 1 : 0) - (b.reward ? 1 : 0) || (a.no || 0) - (b.no || 0);
+function seriesHead(s, p) {
+  return h('div', { class: 'series-head' }, h('h3', { text: `${s.name}系列` }),
+    h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(p.total), 'aria-valuenow': String(p.have), 'aria-label': `${s.name}系列收集進度` }, h('i', { style: `width:${p.total ? p.have / p.total * 100 : 0}%` })),
+    h('span', { class: 'count', text: `${p.have} / ${p.total}` }), p.done ? h('span', { class: 'done-badge', text: '集滿！' }) : null);
+}
+function renderDex() {
+  const v = $('#v-dex'); v.textContent = '';
+  if (!KID) return;
+  const all = finals().filter(c => !c.reward), n = all.filter(c => ownsCard(KID.id, c.id)).length;
+  v.append(h('div', { class: 'dex-head' }, avatar(KID), h('div', { class: 'grow' },
+    h('h2', { text: `${KID.name}的圖鑑` }),
+    h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(all.length), 'aria-valuenow': String(n), 'aria-label': '收集進度' }, h('i', { style: `width:${all.length ? n / all.length * 100 : 0}%` })),
+    h('span', { class: 'count', text: `收集 ${n} / ${all.length}` }))));
+  v.append(filterChips(dexFilter, k => { dexFilter = k; renderDex(); }));
+  const work = []; let shown = 0;
+  for (const s of seriesList()) {
+    const inSeries = finals().filter(c => sidOf(c) === s.id);
+    if (!inSeries.length) continue;
+    const list = inSeries.filter(c => dexFilter === 'all' || c.type === dexFilter).sort(byNo);
+    if (!list.length) continue;
+    shown++;
+    const p = seriesProgress(KID.id, s.id);
+    v.append(h('section', { class: 'series' }, seriesHead(s, p), h('div', { class: 'grid' }, list.map(c => {
+      const o = DATA.owned.find(x => x.kidId === KID.id && x.cardId === c.id), have = !!o;
+      const img = h('img', { class: 'face', alt: have ? c.name : `第 ${c.no} 號，還沒收集到` });
+      work.push([img, c, !have]);
+      if (c.reward && !have) {
+        const rp = seriesProgress(KID.id, c.reward.series), rs = seriesList().find(x => x.id === c.reward.series) || s;
+        return h('button', { class: 'tile' + (rp.done ? ' reward-ready' : ''), type: 'button', 'aria-label': rp.done ? '獎勵卡：可以領了' : `獎勵卡：集滿${rs.name}系列還差 ${rp.left} 張`,
+          onclick: () => toast(rp.done ? '集滿了！請爸媽把這張獎勵卡送給你' : `集滿${rs.name}系列就能拿到，還差 ${rp.left} 張`) },
+          img, h('span', { class: 'badge-reward', text: '獎勵' }), h('span', { class: 'meta' }, h('span', { text: '集滿獎勵' }), h('span', { text: rp.done ? '可以領了！' : `再 ${rp.left} 張` })));
+      }
+      return h('button', { class: 'tile', type: 'button', onclick: () => have ? openViewer(c) : toast('還沒收集到這張卡'), 'aria-label': have ? c.name : `第 ${c.no} 號，還沒收集到` },
+        img, have && !o.seenAt ? h('span', { class: 'badge-new', text: 'NEW' }) : null,
+        h('span', { class: 'meta' }, h('span', { text: c.reward ? '★ 獎勵' : `No.${pad3(c.no)}` }), h('span', { text: have ? c.name : '？？？' })));
+    }))));
+  }
+  if (!shown) v.append(h('div', { class: 'empty' }, h('p', { text: DATA.cards.length ? '這一類還沒有卡片。' : '還沒有卡片，等爸媽做第一張吧。' })));
+  fillTiles(work);
+  checkCelebrate();
+}
+function checkCelebrate() {
+  if (!KID || ROLE !== 'viewer' || !$('#modal').hidden) return;
+  const all = lsGet('fc-celebrated') || {}, mine = all[KID.id] || [];
+  for (const s of seriesList()) {
+    if (seriesProgress(KID.id, s.id).done && !mine.includes(s.id)) { mine.push(s.id); all[KID.id] = mine; lsSet('fc-celebrated', all); celebrate(s); return; }
+  }
+}
+function celebrate(s) {
+  const sheet = $('#sheet'); sheet.textContent = '';
+  const rewards = DATA.cards.filter(c => c.reward && c.reward.series === s.id && !ownsCard(KID.id, c.id));
+  const confetti = h('div', { class: 'confetti', 'aria-hidden': 'true' });
+  const colors = ['#FF7A59', '#FFC93C', '#5CC46B', '#4FB3F6', '#A77BF3', '#FF7EB6'];
+  for (let i = 0; i < 46; i++) confetti.append(h('i', { style: `left:${Math.random() * 100}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * .8).toFixed(2)}s;transform:rotate(${Math.round(Math.random() * 180)}deg)` }));
+  sheet.append(confetti, h('div', { class: 'celebrate' },
+    h('div', { class: 'celebrate-star', html: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICON.any}" fill="#F2C14E" stroke="#2B2340" stroke-width="1.4" stroke-linejoin="round"></path></svg>` }),
+    h('h3', { text: '集滿了！' }),
+    h('p', { text: `${KID.name}收集完整個${s.name}系列！` }),
+    rewards.length ? h('p', { class: 'note', text: `請爸媽送你獎勵卡：${rewards.map(c => c.name).join('、')}` }) : null,
+    h('button', { class: 'btn primary', type: 'button', onclick: closeModal }, '好耶！')));
+  openModal();
+}
+async function openViewer(card) {
+  const sheet = $('#sheet'); sheet.textContent = '';
+  const o = KID && DATA.owned.find(x => x.kidId === KID.id && x.cardId === card.id);
+  const firstTime = !!(o && !o.seenAt);
+  const animate = firstTime && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const big = h('div', { class: 'big' });
+  const front = await renderCard(card, IMG.get(card.photoId), 720);
+  const addShine = () => {
+    if (card.rarity !== 'holo' && card.rarity !== 'limited') return;
+    const sh = h('div', { class: 'shine', 'aria-hidden': 'true' }); big.append(sh);
+    big.addEventListener('pointermove', e => { const r = big.getBoundingClientRect(); sh.classList.add('manual'); sh.style.backgroundPosition = `${100 - (e.clientX - r.left) / r.width * 100}% ${100 - (e.clientY - r.top) / r.height * 100}%`; });
+    big.addEventListener('pointerleave', () => { sh.classList.remove('manual'); sh.style.backgroundPosition = ''; });
+  };
+  if (animate) {
+    const flip = h('div', { class: 'flip' }, h('div', { class: 'face front' }, front), h('div', { class: 'face back' }, await renderBack(720)));
+    big.classList.add('flipwrap'); big.append(flip);
+    flip.addEventListener('animationend', () => { big.classList.remove('flipwrap'); big.textContent = ''; big.append(front); addShine(); }, { once: true });
+    requestAnimationFrame(() => flip.classList.add('play'));
+  } else { big.append(front); addShine(); }
+  big.setAttribute('role', 'img'); big.setAttribute('aria-label', firstTime ? `拿到新卡：${card.name}` : card.name);
+  big.addEventListener('click', closeModal);
+  sheet.append(big, h('button', { class: 'bare-close', type: 'button', 'aria-label': '關閉', onclick: closeModal, html: svgIcon('M6 6l12 12M18 6L6 18') }));
+  openModal(true);
+  if (firstTime) {
+    o.seenAt = Date.now(); lsSet('fc-cache', { ...DATA, role: ROLE });
+    try { await store.markSeen(KID.id, card.id); } catch (e) { console.warn(e); }
+  }
+}
+function openModal(bare) { const m = $('#modal'); m.classList.toggle('bare', !!bare); m.hidden = false; document.body.style.overflow = 'hidden'; }
+function closeModal() { $('#modal').hidden = true; document.body.style.overflow = ''; if (current === 'dex') renderDex(); }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+
+/* ============================================================
+   爸媽：卡片庫
+   ============================================================ */
+let cardFilter = 'all';
+function ownerDots(cardId) { return h('span', { class: 'owners' }, DATA.kids.filter(k => DATA.owned.some(o => o.kidId === k.id && o.cardId === cardId)).map(k => h('span', { class: 'dot', style: `background:${k.color}`, title: k.name }))); }
+function renderCards() {
+  const v = $('#v-cards'); v.textContent = '';
+  v.append(h('div', { class: 'view-head' }, h('div', null, h('h2', { text: '卡片' }), h('p', { class: 'sub', text: `正式 ${finals().length} 張 · 暫存 ${DATA.cards.length - finals().length} 張 · ${seriesList().length} 個系列` })), h('button', { class: 'btn primary', type: 'button', onclick: () => openEditor(null) }, '做新卡')));
+  // 集滿提醒
+  DATA.kids.forEach(k => seriesList().forEach(s => {
+    if (!seriesProgress(k.id, s.id).done) return;
+    const pending = DATA.cards.filter(c => c.reward && c.reward.series === s.id && !ownsCard(k.id, c.id));
+    if (pending.length) v.append(h('div', { class: 'note', role: 'status' }, h('strong', { text: `${k.name}集滿了${s.name}系列！` }), ` 可以送獎勵卡：${pending.map(c => c.name).join('、')}`));
+  }));
+  v.append(filterChips(cardFilter, k => { cardFilter = k; renderCards(); }));
+  const work = []; let shown = 0;
+  // 暫存區：測試列印用，孩子看不到
+  const drafts = DATA.cards.filter(c => c.status === 'draft' && (cardFilter === 'all' || c.type === cardFilter)).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  if (drafts.length) {
+    shown++;
+    v.append(h('section', { class: 'series drafts' }, h('div', { class: 'series-head' }, h('h3', { text: '暫存區' }), h('span', { class: 'hint', text: `${drafts.length} 張 · 可以先印出來測試，孩子看不到` })),
+      h('div', { class: 'grid' }, drafts.map(c => {
+        const img = h('img', { class: 'face', alt: c.name }); work.push([img, c, false]);
+        return h('button', { class: 'tile', type: 'button', onclick: () => openDetail(c) }, img, h('span', { class: 'badge-draft', text: '暫存' }), h('span', { class: 'meta' }, h('span', { text: c.name })));
+      }))));
+  }
+  for (const s of seriesList()) {
+    const list = finals().filter(c => sidOf(c) === s.id && (cardFilter === 'all' || c.type === cardFilter)).sort(byNo);
+    if (!list.length) continue;
+    shown++;
+    const count = finals().filter(c => sidOf(c) === s.id && !c.reward).length;
+    v.append(h('section', { class: 'series' }, h('div', { class: 'series-head' }, h('h3', { text: `${s.name}系列` }), h('span', { class: 'hint', text: `${count} 張` })),
+      h('div', { class: 'grid' }, list.map(c => {
+        const img = h('img', { class: 'face', alt: c.name }); work.push([img, c, false]);
+        return h('button', { class: 'tile', type: 'button', onclick: () => openDetail(c) }, img, c.reward ? h('span', { class: 'badge-reward', text: '獎勵' }) : null, h('span', { class: 'meta' }, h('span', { text: `${c.reward ? '★' : pad3(c.no)} ${c.name}` }), ownerDots(c.id)));
+      }))));
+  }
+  if (!shown) { v.append(h('div', { class: 'empty' }, h('p', { text: DATA.cards.length ? '這一類還沒有卡片。' : '還沒有卡片。選一張家裡的照片，做第一張卡吧。' }), h('button', { class: 'btn primary', type: 'button', onclick: () => openEditor(null) }, '做新卡'))); return; }
+  fillTiles(work);
+}
+async function openDetail(card) {
+  const sheet = $('#sheet'); sheet.textContent = '';
+  const big = h('div', { class: 'big' }); big.append(await renderCard(card, IMG.get(card.photoId), 720));
+  const ownRow = h('div', { class: 'chips', role: 'group', 'aria-label': '送給誰' });
+  const drawOwn = () => {
+    ownRow.textContent = '';
+    if (!DATA.kids.length) { ownRow.append(h('span', { class: 'hint', text: '先到「設定」頁新增孩子，就能標記送給誰。' })); return; }
+    DATA.kids.forEach(k => {
+      const on = DATA.owned.some(o => o.kidId === k.id && o.cardId === card.id);
+      ownRow.append(h('button', { class: 'chip', type: 'button', 'aria-pressed': String(on), onclick: async () => {
+        try { await store.setOwned(k.id, card.id, !on); DATA.owned = DATA.owned.filter(o => !(o.kidId === k.id && o.cardId === card.id)); if (!on) DATA.owned.push({ kidId: k.id, cardId: card.id, at: Date.now() }); drawOwn(); renderCards(); toast(on ? `已從${k.name}的圖鑑移除` : `已加入${k.name}的圖鑑`); }
+        catch (e) { toast(e.message); }
+      } }, h('span', { class: 'dot', style: `background:${k.color}` }), on ? `${k.name} ✓` : `送給${k.name}`));
+    });
+  };
+  drawOwn();
+  const isDraft = card.status === 'draft';
+  const actions = h('div', { class: 'btnrow' });
+  const drawActions = () => {
+    actions.textContent = '';
+    if (isDraft) actions.append(
+      h('button', { class: 'btn primary', type: 'button', onclick: () => {
+        actions.textContent = '';
+        actions.append(h('p', { class: 'note', style: 'flex-basis:100%;margin:0', text: `把「${card.name}」加入正式卡牌？加入後會拿到編號並定案，之後只能修正錯字。` }),
+          h('button', { class: 'btn', type: 'button', onclick: drawActions }, '再等等'),
+          h('button', { class: 'btn primary', type: 'button', onclick: async () => {
+            try { const saved = await store.saveCard({ ...clone(card), status: 'final' }, null); DATA.cards = DATA.cards.filter(c => c.id !== saved.id).concat(saved); closeModal(); renderCards(); toast(`已加入正式卡牌 ${pad3(saved.no)} ${saved.name}`); }
+            catch (e) { toast(e.message); }
+          } }, '確定加入'));
+      } }, '加入正式卡牌'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { closeModal(); openEditor(card, 'draft'); } }, '修改'));
+    else actions.append(
+      h('button', { class: 'btn primary', type: 'button', onclick: () => { closeModal(); openEditor(card, 'variant'); } }, '做異圖（換照片）'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { closeModal(); openEditor(card, 'fix'); } }, '修正錯字'));
+    actions.append(
+      h('button', { class: 'btn', type: 'button', onclick: () => { printSel.add(card.id); closeModal(); go('print'); } }, isDraft ? '測試列印' : '拿去列印'),
+      h('button', { class: 'btn danger', type: 'button', onclick: () => {
+        actions.textContent = '';
+        actions.append(h('p', { class: 'note', style: 'flex-basis:100%;margin:0', text: isDraft ? `確定刪除暫存卡「${card.name}」？` : `確定刪除「${card.name}」？孩子圖鑑裡的這張也會一起消失。` }),
+          h('button', { class: 'btn', type: 'button', onclick: drawActions }, '不要刪'),
+          h('button', { class: 'btn danger', type: 'button', onclick: async () => {
+            try { await store.deleteCard(card.id); DATA.cards = DATA.cards.filter(c => c.id !== card.id); DATA.owned = DATA.owned.filter(o => o.cardId !== card.id); printSel.delete(card.id); closeModal(); renderCards(); toast('已刪除'); }
+            catch (e) { toast(e.message); }
+          } }, '確定刪除'));
+      } }, '刪除'));
+  };
+  drawActions();
+  sheet.append(h('div', { class: 'sheet-head' }, h('h3', { text: isDraft ? `暫存：${card.name}` : `${pad3(card.no)} ${card.name}` }), h('button', { class: 'btn small ghost', type: 'button', onclick: closeModal }, '關閉')),
+    big, isDraft ? h('p', { class: 'hint', text: '暫存卡不會出現在孩子的圖鑑，也還不能送人。' }) : h('div', { class: 'field' }, h('span', { class: 'label', text: '送給誰（會出現在他的圖鑑）' }), ownRow), actions);
+  openModal();
+}
+
+/* ============================================================
+   爸媽：做卡（編輯器）
+   ============================================================ */
+let draft = null, draftPhoto = null, previewTimer = 0;
+function newCard() {
+  return { id: 'c_' + uid(), no: 0, series: 'base', reward: null, type: 'character', name: '', tag: '家人', attr: 'fire', hp: 100, skills: ['fly', 'hug2'], rarity: 'normal', frame: 'ruins', effect: 'none', filter: 'none', date: ymNow(), place: '', story: '', photoId: '',
+    sceneEffects: [{ attr: 'water', delta: 10 }, { attr: '', delta: -10 }], mission: { text: '', minutes: 10, difficulty: 2, reward: 1 }, item: { author: '', age: '', effect: ITEM_EFFECTS[0] }, boost: { effect: BOOST_EFFECTS[0] } };
+}
+let editMode = 'new';
+const snapSkills = c => (c.skillData && c.skillData.length) ? clone(c.skillData) : (c.skills || []).map(id => skillById(id)).filter(Boolean).map(clone);
+function openEditor(card, mode) {
+  editMode = card ? (mode || 'fix') : 'new';
+  if (!card) { draft = newCard(); draftPhoto = null; }
+  else if (editMode === 'variant') {
+    draft = Object.assign(newCard(), clone(card), { id: 'c_' + uid(), no: 0, photoId: '', reward: null, variantOf: card.variantOf || card.id, story: '', updatedAt: 0 });
+    draft.skillData = snapSkills(card); draftPhoto = null;
+  } else if (editMode === 'draft') {
+    draft = Object.assign(newCard(), clone(card)); delete draft.skillData;
+    if (draft.type === 'character' && card.skillData && card.skillData.length) draft.skills = card.skillData.map((sk, i) => skillById(sk.id) ? sk.id : (draft.skills || [])[i]);
+    draftPhoto = card.photoId && IMG.get(card.photoId) ? { img: IMG.get(card.photoId), isNew: false } : null;
+  } else {
+    draft = Object.assign(newCard(), clone(card)); draft.skillData = snapSkills(card);
+    draftPhoto = card.photoId && IMG.get(card.photoId) ? { img: IMG.get(card.photoId), isNew: false } : null;
+  }
+  show('editor'); renderEditor();
+}
+function chipGroup(label, options, value, onPick, id) {
+  const wrapEl = h('div', { class: 'field' }, h('span', { class: 'label', id: id + 'L', text: label }));
+  const row = h('div', { class: 'chips', role: 'group', 'aria-labelledby': id + 'L' });
+  const draw = val => { row.textContent = ''; options.forEach(([k, l, dot]) => row.append(h('button', { class: 'chip', type: 'button', 'aria-pressed': String(val === k), onclick: () => { onPick(k); draw(k); } }, dot ? h('span', { class: 'dot', style: `background:${dot}` }) : null, l))); };
+  draw(value); wrapEl.append(row); return wrapEl;
+}
+function textField(label, id, value, onInput, opts = {}) {
+  const input = opts.area ? h('textarea', { id, maxlength: opts.max || null, placeholder: opts.ph || '' }) : h('input', { type: opts.type || 'text', id, maxlength: opts.max || null, placeholder: opts.ph || '', min: opts.min, max: opts.maxNum, inputmode: opts.inputmode });
+  input.value = value == null ? '' : value;
+  input.addEventListener('input', () => onInput(input.value));
+  return h('div', { class: 'field' }, h('label', { for: id, text: label }), input, opts.hint ? h('span', { class: 'hint', text: opts.hint }) : null);
+}
+function selectField(label, id, options, value, onChange, groups) {
+  const sel = h('select', { id });
+  if (groups) groups.forEach(g => { const og = h('optgroup', { label: g.label }); g.options.forEach(([k, l]) => og.append(h('option', { value: k, text: l }))); sel.append(og); });
+  else options.forEach(([k, l]) => sel.append(h('option', { value: k, text: l })));
+  sel.value = value; sel.addEventListener('change', () => onChange(sel.value));
+  return h('div', { class: 'field' }, h('label', { for: id, text: label }), sel);
+}
+const costText = cost => cost.map(c => ATTR[c].name).join('');
+function skillOptions() { return SKILL_GROUP_KEYS.map(([k, label]) => ({ label, options: skillLib().filter(s => (s.group || 'family') === k).map(s => [s.id, `${s.name}（${costText(s.cost)}・${s.dmg}）`]) })).filter(g => g.options.length); }
+
+function renderEditor() {
+  const v = $('#v-editor'); v.textContent = '';
+  const mode = editMode;
+  const canvas = h('canvas', { id: 'pvCanvas', width: 630, height: 880, 'aria-label': '卡片預覽', role: 'img' });
+  const preview = h('div', { class: 'preview' }, canvas, h('span', { class: 'hint', text: '印出來是 63 × 88mm 標準卡牌大小' }));
+  const form = h('div', { class: 'form' });
+  const title = mode === 'fix' ? `修正文字 ${pad3(draft.no)}` : mode === 'variant' ? `做「${draft.name}」的異圖` : mode === 'draft' ? '編輯暫存卡' : '做新卡';
+  v.append(h('div', { class: 'view-head' }, h('h2', { text: title })), h('div', { class: 'editor' }, preview, form));
+  const set = (k, val) => { draft[k] = val; schedulePreview(); };
+  const monthField = () => {
+    const monthIn = h('input', { type: 'month', id: 'fDate' }); monthIn.value = (draft.date || '').replace('.', '-');
+    monthIn.addEventListener('input', () => set('date', monthIn.value ? monthIn.value.replace('-', '.') : ''));
+    return h('div', { class: 'field' }, h('label', { for: 'fDate', text: '日期' }), monthIn);
+  };
+  const storyField = () => textField('一句小故事', 'fStory', draft.story, val => set('story', val), { area: true, max: 40, ph: '這張照片背後的故事，多年後最珍貴的就是這一行', hint: '40 字以內，空白就不印' });
+  const placeField = () => textField('地點', 'fPlace', draft.place, val => set('place', val), { max: 10, ph: '例：台中' });
+  const nameField = () => textField('名稱', 'fName', draft.name, val => set('name', val), { max: 16, ph: draft.type === 'mission' ? '例：看書 10 分鐘' : '例：超人爸爸' });
+  const seriesField = () => selectField('系列（圖鑑分類）', 'fSeries', seriesList().map(s => [s.id, s.name + '系列']), draft.series || 'base', val => set('series', val));
+  const saveBar = label => form.append(h('div', { class: 'savebar' }, h('button', { class: 'btn primary', type: 'button', onclick: saveDraft }, label), h('button', { class: 'btn', type: 'button', onclick: () => { draft = null; go('cards'); } }, '取消')));
+
+  /* ---- 修正文字：已做好的卡只能改錯字 ---- */
+  if (mode === 'fix') {
+    const g = h('div', { class: 'group' }, h('h3', { text: '修正文字' }),
+      h('p', { class: 'note', text: '已經做好的卡只能修正錯字。想換照片或框，請用「做異圖」另做一張。' }), nameField());
+    if (draft.type === 'mission') g.append(textField('任務內容', 'fMt', draft.mission.text, val => { draft.mission.text = val; schedulePreview(); }, { area: true, max: 30 }));
+    if (draft.type === 'item') g.append(h('div', { class: 'row2' },
+      textField('作者', 'fIa', draft.item.author, val => { draft.item.author = val; schedulePreview(); }, { max: 8 }),
+      textField('創作年齡', 'fIg', draft.item.age, val => { draft.item.age = val; schedulePreview(); }, { max: 10 })));
+    if ((draft.skillData || []).length) draft.skillData.forEach((s, i) => g.append(h('div', { class: 'row2' },
+      textField(`招式 ${i + 1} 名稱`, 'fSkN' + i, s.name, val => { s.name = val; schedulePreview(); }, { max: 8 }),
+      textField(`招式 ${i + 1} 效果`, 'fSkE' + i, s.effect === '—' ? '' : s.effect, val => { s.effect = val.trim() || '—'; schedulePreview(); }, { max: 24 }))));
+    if (draft.type !== 'mission' && draft.type !== 'boost' && draft.type !== 'item') g.append(placeField());
+    g.append(storyField());
+    form.append(g); saveBar('儲存修正'); schedulePreview(true); return;
+  }
+
+  /* ---- 種類（異圖沿用原卡） ---- */
+  if (mode === 'new' || mode === 'draft') form.append(h('div', { class: 'group' }, chipGroup('卡片種類', TYPE_KEYS.map(k => [k, TYPE[k].name + '卡']), draft.type, k => { draft.type = k; renderEditor(); }, 'fType')));
+
+  /* ---- 照片 ---- */
+  const fileIn = h('input', { type: 'file', accept: 'image/*', id: 'fPhoto', hidden: true });
+  fileIn.addEventListener('change', () => { const f = fileIn.files[0]; fileIn.value = ''; if (f) openCropper(f); });
+  const photoGroup = h('div', { class: 'group' }, h('h3', { text: '照片' }),
+    h('div', { class: 'btnrow' },
+      h('button', { class: 'btn primary', type: 'button', onclick: () => fileIn.click() }, draftPhoto ? '換一張照片' : '選照片'),
+      draftPhoto && draftPhoto.file ? h('button', { class: 'btn', type: 'button', onclick: () => openCropper(draftPhoto.file) }, '重新裁切') : null),
+    fileIn);
+  if (mode === 'variant' && !draftPhoto) photoGroup.append(h('p', { class: 'hint', text: '異圖：名稱、招式和數值都跟原卡一樣，換一張照片和框就是新的收藏。' }));
+  if (draftPhoto && draftPhoto.img) {
+    const a = draftPhoto.img.naturalWidth / draftPhoto.img.naturalHeight;
+    if (Math.abs(a / photoAspect(draft.type) - 1) > .03) photoGroup.append(h('p', { class: 'note', text: '照片比例和這種卡的照片框不同，邊緣會被裁掉一些。想要剛好，請重新裁切。' }));
+  }
+  photoGroup.append(
+    chipGroup('照片濾鏡', Object.entries(FILTERS), draft.filter, k => set('filter', k), 'fFilter'),
+    chipGroup('照片特效', EFFECT_KEYS.map(k => [k, EFFECTS[k].name]), draft.effect, k => set('effect', k), 'fFx'));
+  form.append(photoGroup);
+
+  /* ---- 卡片內容 ---- */
+  const basic = h('div', { class: 'group' }, h('h3', { text: '卡片內容' }));
+  if (mode === 'variant') {
+    const sk = (draft.skillData || []).map(s => `${s.name}（${s.dmg}）`).join('、');
+    basic.append(h('p', { class: 'note', text: `沿用原卡：${draft.name} · ${TYPE[draft.type].name}卡${draft.type === 'character' ? ` · ${ATTR[draft.attr].name}屬性 · HP ${draft.hp}${sk ? ' · ' + sk : ''}` : ''}` }), seriesField());
+  } else {
+    basic.append(nameField(), seriesField());
+    if (draft.type === 'character') {
+      if (!Array.isArray(draft.skills)) draft.skills = [];
+      if (!skillById(draft.skills[0])) draft.skills[0] = (skillLib()[0] || {}).id;
+      if (!skillById(draft.skills[1])) draft.skills[1] = (skillLib()[1] || skillLib()[0] || {}).id;
+      basic.append(
+        h('div', { class: 'row2' },
+          selectField('標籤', 'fTag', [['家人', '家人'], ['朋友', '朋友'], ['寵物', '寵物']], draft.tag, val => set('tag', val)),
+          selectField('HP', 'fHp', Array.from({ length: 10 }, (_, i) => { const n = 60 + i * 10; return [String(n), String(n)]; }), String(draft.hp), val => set('hp', Number(val)))),
+        chipGroup('屬性', ATTR_KEYS.map(k => [k, ATTR[k].name, ATTR[k].bg]), draft.attr, k => set('attr', k), 'fAttr'),
+        selectField('招式 1', 'fSk1', null, draft.skills[0], val => { draft.skills[0] = val; schedulePreview(); }, skillOptions()),
+        selectField('招式 2', 'fSk2', null, draft.skills[1], val => { draft.skills[1] = val; schedulePreview(); }, skillOptions()),
+        h('p', { class: 'hint', text: '弱點和抗性會依屬性自動帶入。招式可以在「設定 › 招式庫」新增或修改。' }));
+    }
+    if (draft.type === 'scene') {
+      const attrOpts = [['', '不使用'], ...ATTR_KEYS.map(k => [k, ATTR[k].name + '屬性'])], deltaOpts = [['20', '+20'], ['10', '+10'], ['-10', '−10'], ['-20', '−20']];
+      [0, 1].forEach(i => {
+        const e = draft.sceneEffects[i] || (draft.sceneEffects[i] = { attr: '', delta: 10 });
+        basic.append(h('div', { class: 'row2' },
+          selectField(`場地效果 ${i + 1}`, 'fSe' + i, attrOpts, e.attr, val => { e.attr = val; schedulePreview(); }),
+          selectField('招式傷害', 'fSd' + i, deltaOpts, String(e.delta), val => { e.delta = Number(val); schedulePreview(); })));
+      });
+    }
+    if (draft.type === 'mission') {
+      const m = draft.mission;
+      basic.append(
+        textField('任務內容', 'fMt', m.text, val => { m.text = val; schedulePreview(); }, { area: true, max: 30, ph: '例：安靜坐好，自己翻書看 10 分鐘。', hint: '30 字以內，孩子聽爸媽唸就懂的說法最好' }),
+        h('div', { class: 'row2' },
+          textField('計時（分鐘）', 'fMm', m.minutes, val => { m.minutes = Math.max(0, Math.min(99, Number(val) || 0)); schedulePreview(); }, { type: 'number', min: 0, maxNum: 99, inputmode: 'numeric', hint: '填 0 就不顯示' }),
+          selectField('獎勵星星', 'fMr', [['1', '1 顆'], ['2', '2 顆'], ['3', '3 顆']], String(m.reward || 1), val => { m.reward = Number(val); schedulePreview(); })),
+        chipGroup('難度', [[1, '★'], [2, '★★'], [3, '★★★']], Number(m.difficulty) || 1, k => { m.difficulty = k; schedulePreview(); }, 'fMd'));
+    }
+    if (draft.type === 'item') {
+      const it = draft.item;
+      basic.append(
+        h('div', { class: 'row2' },
+          textField('作者', 'fIa', it.author, val => { it.author = val; schedulePreview(); }, { max: 8, ph: '例：哥哥' }),
+          textField('創作年齡', 'fIg', it.age, val => { it.age = val; schedulePreview(); }, { max: 10, ph: '例：4 歲 6 個月' })),
+        selectField('裝備效果', 'fIe', ITEM_EFFECTS.map(x => [x, x]), it.effect, val => { it.effect = val; schedulePreview(); }));
+    }
+    if (draft.type === 'boost') basic.append(selectField('效果', 'fBe', BOOST_EFFECTS.map(x => [x, x]), draft.boost.effect, val => { draft.boost.effect = val; schedulePreview(); }));
+  }
+  if (draft.type !== 'mission' && draft.type !== 'boost') basic.append(h('div', { class: 'row2' }, monthField(), draft.type === 'item' ? h('span') : placeField()));
+  basic.append(storyField());
+  form.append(basic);
+
+  /* ---- 稀有度 ---- */
+  const rare = h('div', { class: 'group' }, h('h3', { text: '稀有度與框' }),
+    chipGroup('稀有度', Object.entries(RARITY), draft.rarity, k => { draft.rarity = k; renderEditor(); }, 'fRare'));
+  if (draft.rarity === 'limited') rare.append(chipGroup('限定框', FRAME_KEYS.map(k => [k, FRAMES[k].name]), draft.frame, k => set('frame', k), 'fFrame'));
+  if (draft.rarity === 'holo') rare.append(h('p', { class: 'hint', text: '閃卡會印上彩虹星點框。想要真的反光，印好後貼一層鐳射冷裱膜。' }));
+  if (mode === 'new' || mode === 'draft') {
+    rare.append(chipGroup('取得方式', [['normal', '一般'], ['reward', '集滿獎勵']], draft.reward ? 'reward' : 'normal', k => {
+      draft.reward = k === 'reward' ? { series: (draft.reward && draft.reward.series) || 'base' } : null;
+      if (k === 'reward' && draft.rarity !== 'limited') { draft.rarity = 'limited'; draft.frame = 'gold'; }
+      renderEditor();
+    }, 'fReward'));
+    if (draft.reward) rare.append(
+      selectField('集滿哪個系列才拿得到', 'fRewardSeries', seriesList().map(s => [s.id, s.name + '系列']), draft.reward.series, val => { draft.reward.series = val; schedulePreview(); }),
+      h('p', { class: 'hint', text: '孩子集滿這個系列的一般卡後，圖鑑會慶祝並提醒爸媽送這張卡。建議用黃金框。' }));
+  }
+  form.append(rare);
+  form.append(h('div', { class: 'savebar' },
+    h('button', { class: 'btn', type: 'button', onclick: e => saveDraft(e, 'draft') }, '存到暫存區'),
+    h('button', { class: 'btn primary', type: 'button', onclick: e => saveDraft(e, 'final') }, '加入正式卡牌'),
+    h('button', { class: 'btn ghost', type: 'button', onclick: () => { draft = null; go('cards'); } }, '取消')));
+  form.append(h('p', { class: 'hint', text: '暫存區的卡可以先印出來測試，隨時改、隨時刪，孩子的圖鑑也看不到。滿意了再加入正式卡牌，加入後會拿到編號並定案。' }));
+  schedulePreview(true);
+}
+function schedulePreview(now) {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(async () => {
+    const cv = $('#pvCanvas'); if (!cv || !draft) return;
+    const snapshot = clone(draft); const prev = DATA.cards.find(c => c.id === draft.id);
+    snapshot.no = prev && prev.status !== 'draft' && prev.no ? prev.no : nextNoIn(DATA.cards); snapshot.status = 'final';
+    if (editMode === 'new' || editMode === 'draft' || !snapshot.skillData || !snapshot.skillData.length) snapshot.skillData = (snapshot.skills || []).map(id => skillById(id)).filter(Boolean);
+    const c = await renderCard(snapshot, draftPhoto && draftPhoto.img, 630);
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(c, 0, 0);
+    const mi = $('#miniImg'); if (mi) mi.src = c.toDataURL('image/jpeg', .8);
+  }, now ? 0 : 120);
+}
+async function saveDraft(e, status) {
+  const btn = e.currentTarget, label = btn.textContent;
+  if (!draft.name.trim()) { toast('先幫卡片取個名字'); $('#fName')?.focus(); return; }
+  btn.disabled = true; btn.textContent = '儲存中…';
+  try {
+    const card = clone(draft); card.name = card.name.trim();
+    if (editMode !== 'fix') card.status = status === 'draft' ? 'draft' : 'final';
+    if ((editMode === 'new' || editMode === 'draft') && card.type === 'character') card.skillData = (card.skills || []).map(id => skillById(id)).filter(Boolean).map(clone);
+    if (editMode === 'variant' && !(draftPhoto && draftPhoto.isNew)) { toast('異圖要換一張新照片'); btn.disabled = false; btn.textContent = label; return; }
+    const saved = await store.saveCard(card, draftPhoto && draftPhoto.isNew ? draftPhoto.dataUrl : null);
+    if (draftPhoto && draftPhoto.isNew && saved.photoId) { IMG.set(saved.photoId, draftPhoto.img); if (!DEMO) kv.set('pc:' + saved.photoId, draftPhoto.dataUrl); }
+    DATA.cards = DATA.cards.filter(c => c.id !== saved.id).concat(saved);
+    draft = null; draftPhoto = null; toast(saved.status === 'draft' ? `已存到暫存區：${saved.name}` : `已加入正式卡牌 ${pad3(saved.no)} ${saved.name}`); go('cards');
+  } catch (x) { toast(x.message); btn.disabled = false; btn.textContent = label; }
+}
+
+/* ---- 裁切旋轉 ---- */
+const crop = { img: null, file: null, s: 1, base: 1, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0, frame: null, pointers: new Map(), pinch: null };
+async function openCropper(file) {
+  let img;
+  try { img = await loadImg(URL.createObjectURL(file)); } catch (e) { toast('這張照片打不開，換一張試試'); return; }
+  Object.assign(crop, { img, file, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0 });
+  $('#cropZoom').value = 1; $('#cropRot').value = 0; $('#cropZoomOut').textContent = '1.0×'; $('#cropRotOut').textContent = '0°';
+  $('#cropTitle').textContent = `裁切${TYPE[draft.type].name}卡的照片`;
+  $('#cropper').hidden = false; document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => { layoutCrop(); drawCrop(); });
+}
+function layoutCrop() {
+  const cv = $('#cropCanvas'), r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  const a = photoAspect(draft.type), maxW = r.width * .9, maxH = r.height * .82;
+  let fw = maxW, fh = fw / a; if (fh > maxH) { fh = maxH; fw = fh * a; }
+  crop.frame = { w: fw, h: fh, cx: r.width / 2, cy: r.height / 2, dpr };
+}
+function cropAngle() { return (crop.rot90 * 90 + crop.fine) * Math.PI / 180; }
+function minScale() {
+  const t = cropAngle(), c = Math.abs(Math.cos(t)), s = Math.abs(Math.sin(t)), f = crop.frame;
+  return Math.max((f.w * c + f.h * s) / crop.img.naturalWidth, (f.w * s + f.h * c) / crop.img.naturalHeight);
+}
+function drawCrop() {
+  if (!crop.img || !crop.frame) return;
+  const cv = $('#cropCanvas'), ctx = cv.getContext('2d'), f = crop.frame, W = cv.width / f.dpr, H = cv.height / f.dpr;
+  crop.s = minScale() * crop.zoom;
+  ctx.setTransform(f.dpr, 0, 0, f.dpr, 0, 0); ctx.fillStyle = '#14101C'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(f.cx + crop.tx, f.cy + crop.ty); ctx.rotate(cropAngle()); ctx.scale(crop.s, crop.s);
+  ctx.drawImage(crop.img, -crop.img.naturalWidth / 2, -crop.img.naturalHeight / 2); ctx.restore();
+  const x = f.cx - f.w / 2, y = f.cy - f.h / 2;
+  ctx.fillStyle = 'rgba(20,16,28,.66)'; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(x, y, f.w, f.h); ctx.fill('evenodd');
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 1; i < 3; i++) { ctx.moveTo(x + f.w * i / 3, y); ctx.lineTo(x + f.w * i / 3, y + f.h); ctx.moveTo(x, y + f.h * i / 3); ctx.lineTo(x + f.w, y + f.h * i / 3); }
+  ctx.stroke(); ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.strokeRect(x, y, f.w, f.h);
+}
+function closeCropper() { $('#cropper').hidden = true; document.body.style.overflow = ''; }
+(function wireCropper() {
+  const cv = $('#cropCanvas');
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); crop.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (crop.pointers.size === 2) { const [a, b] = [...crop.pointers.values()]; crop.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), zoom: crop.zoom }; } });
+  cv.addEventListener('pointermove', e => {
+    const p = crop.pointers.get(e.pointerId); if (!p) return;
+    if (crop.pointers.size === 1) { crop.tx += e.clientX - p.x; crop.ty += e.clientY - p.y; }
+    p.x = e.clientX; p.y = e.clientY;
+    if (crop.pointers.size === 2 && crop.pinch) { const [a, b] = [...crop.pointers.values()]; crop.zoom = Math.max(1, Math.min(4, crop.pinch.zoom * Math.hypot(a.x - b.x, a.y - b.y) / crop.pinch.d)); $('#cropZoom').value = crop.zoom; $('#cropZoomOut').textContent = crop.zoom.toFixed(1) + '×'; }
+    drawCrop();
+  });
+  const up = e => { crop.pointers.delete(e.pointerId); if (crop.pointers.size < 2) crop.pinch = null; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e => { e.preventDefault(); crop.zoom = Math.max(1, Math.min(4, crop.zoom * (e.deltaY < 0 ? 1.06 : 1 / 1.06))); $('#cropZoom').value = crop.zoom; $('#cropZoomOut').textContent = crop.zoom.toFixed(1) + '×'; drawCrop(); }, { passive: false });
+  $('#cropZoom').addEventListener('input', e => { crop.zoom = Number(e.target.value); $('#cropZoomOut').textContent = crop.zoom.toFixed(1) + '×'; drawCrop(); });
+  $('#cropRot').addEventListener('input', e => { crop.fine = Number(e.target.value); $('#cropRotOut').textContent = crop.fine + '°'; drawCrop(); });
+  $('#cropL').addEventListener('click', () => { crop.rot90 = (crop.rot90 + 3) % 4; drawCrop(); });
+  $('#cropR').addEventListener('click', () => { crop.rot90 = (crop.rot90 + 1) % 4; drawCrop(); });
+  $('#cropCancel').addEventListener('click', closeCropper);
+  $('#cropOk').addEventListener('click', async () => {
+    const ins = photoInset(draft.type), ow = (CW - ins * 2) * 2, oh = (PHOTO_BOX[draft.type] - ins * 2) * 2, f = crop.frame, k = ow / f.w;
+    const out = document.createElement('canvas'); out.width = ow; out.height = oh;
+    const ctx = out.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, ow, oh);
+    ctx.translate(ow / 2 + crop.tx * k, oh / 2 + crop.ty * k); ctx.rotate(cropAngle()); ctx.scale(crop.s * k, crop.s * k);
+    ctx.imageSmoothingQuality = 'high'; ctx.drawImage(crop.img, -crop.img.naturalWidth / 2, -crop.img.naturalHeight / 2);
+    const dataUrl = out.toDataURL('image/jpeg', .9), img = await loadImg(dataUrl);
+    draftPhoto = { dataUrl, img, file: crop.file, isNew: true };
+    closeCropper(); renderEditor();
+  });
+  window.addEventListener('resize', () => { if (!$('#cropper').hidden) { layoutCrop(); drawCrop(); } });
+})();
+
+/* ============================================================
+   爸媽：列印（Selphy 明信片 148 × 100mm，一張排 2 張卡）
+   ============================================================ */
+const printSel = new Set();
+let printLayout = 'selphy';
+const MM = 300 / 25.4;
+function renderPrint() {
+  const v = $('#v-print'); v.textContent = '';
+  v.append(h('div', { class: 'view-head' }, h('div', null, h('h2', { text: '列印' }), h('p', { class: 'sub', text: '選好要印的卡，產生列印檔後傳到 Selphy。' }))));
+  v.append(h('div', { class: 'group' },
+    chipGroup('版面', [['selphy', 'Selphy 明信片（一張 2 張卡）'], ['single', '單張卡片圖檔']], printLayout, k => { printLayout = k; }, 'pLayout'),
+    h('p', { class: 'hint', text: 'Selphy 請選明信片尺寸、無邊框。卡片四周有 2mm 出血，請對準白邊上的裁切記號裁切，不是沿著顏色邊界剪。裁好後再用圓角器修四個角。' })));
+  const list = sortedCards();
+  if (!list.length) { v.append(h('div', { class: 'empty' }, h('p', { text: '還沒有卡片可以印。' }))); return; }
+  const countEl = h('strong'), genBtn = h('button', { class: 'btn primary', type: 'button' }, '產生列印檔');
+  const updateCount = () => { countEl.textContent = `已選 ${printSel.size} 張`; genBtn.disabled = !printSel.size; };
+  const work = [];
+  v.append(h('div', { class: 'view-head' }, countEl, h('div', { class: 'chips' },
+    h('button', { class: 'btn small', type: 'button', onclick: () => { list.forEach(c => printSel.add(c.id)); renderPrint(); } }, '全選'),
+    h('button', { class: 'btn small', type: 'button', onclick: () => { printSel.clear(); renderPrint(); } }, '清除'))));
+  v.append(h('div', { class: 'grid' }, list.map(c => {
+    const img = h('img', { class: 'face', alt: c.name }); work.push([img, c, false]);
+    const tile = h('button', { class: 'tile', type: 'button', 'aria-pressed': String(printSel.has(c.id)), onclick: () => { printSel.has(c.id) ? printSel.delete(c.id) : printSel.add(c.id); tile.setAttribute('aria-pressed', String(printSel.has(c.id))); updateCount(); } },
+      img, h('span', { class: 'check', html: svgIcon(ICON.check, 'style="color:#fff"') }), c.status === 'draft' ? h('span', { class: 'badge-draft', text: '暫存' }) : null, h('span', { class: 'meta' }, h('span', { text: `${c.status === 'draft' ? '暫存' : pad3(c.no)} ${c.name}` })));
+    return tile;
+  })));
+  const out = h('div', { class: 'sheets', id: 'printOut' });
+  genBtn.onclick = () => generatePrint(out, genBtn);
+  v.append(h('div', { class: 'savebar' }, genBtn), out);
+  updateCount(); fillTiles(work);
+}
+function drawWithBleed(ctx, card, x, y, w, h, b) {
+  // 出血：把卡片最外圈的顏色往外延伸 b 像素，裁偏一點也不會露白
+  const cw = card.width, ch = card.height;
+  ctx.drawImage(card, 0, 0, 1, ch, x - b, y, b, h);
+  ctx.drawImage(card, cw - 1, 0, 1, ch, x + w, y, b, h);
+  ctx.drawImage(card, 0, 0, cw, 1, x, y - b, w, b);
+  ctx.drawImage(card, 0, ch - 1, cw, 1, x, y + h, w, b);
+  ctx.drawImage(card, 0, 0, 1, 1, x - b, y - b, b, b);
+  ctx.drawImage(card, cw - 1, 0, 1, 1, x + w, y - b, b, b);
+  ctx.drawImage(card, 0, ch - 1, 1, 1, x - b, y + h, b, b);
+  ctx.drawImage(card, cw - 1, ch - 1, 1, 1, x + w, y + h, b, b);
+  ctx.drawImage(card, x, y, w, h);
+}
+async function generatePrint(out, btn) {
+  btn.disabled = true; btn.textContent = '產生中…'; out.textContent = '';
+  const cards = sortedCards().filter(c => printSel.has(c.id));
+  await loadPhotos(cards.map(c => c.photoId));
+  const cardW = Math.round(63 * MM), cardH = Math.round(88 * MM), files = [];
+  if (printLayout === 'single') {
+    for (const c of cards) { const cv = await renderCard(c, IMG.get(c.photoId), cardW); files.push({ name: `卡片_${pad3(c.no)}_${c.name}.png`, canvas: cv }); }
+  } else {
+    const W = Math.round(148 * MM), H = Math.round(100 * MM), gap = Math.round(4 * MM), bl = Math.round(2 * MM);
+    const x0 = Math.round((W - cardW * 2 - gap) / 2), y0 = Math.round((H - cardH) / 2);
+    for (let i = 0; i < cards.length; i += 2) {
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+      const pair = cards.slice(i, i + 2), xs = [];
+      for (let j = 0; j < pair.length; j++) {
+        const x = x0 + j * (cardW + gap), cc = await renderCard(pair[j], IMG.get(pair[j].photoId), cardW);
+        drawWithBleed(ctx, cc, x, y0, cardW, cardH, bl); xs.push(x);
+      }
+      // 裁切記號：畫在出血外面，對準真正的裁切線（63 × 88mm）
+      ctx.strokeStyle = '#6E6380'; ctx.lineWidth = 2; ctx.beginPath();
+      const gapOut = Math.round(1 * MM), edgeIn = Math.round(.8 * MM);
+      xs.forEach(x => [x, x + cardW].forEach(tx => {
+        ctx.moveTo(tx, edgeIn); ctx.lineTo(tx, y0 - bl - gapOut);
+        ctx.moveTo(tx, y0 + cardH + bl + gapOut); ctx.lineTo(tx, H - edgeIn);
+      }));
+      const left = xs[0], right = xs[xs.length - 1] + cardW;
+      [y0, y0 + cardH].forEach(ty => {
+        ctx.moveTo(edgeIn, ty); ctx.lineTo(left - bl - gapOut, ty);
+        ctx.moveTo(right + bl + gapOut, ty); ctx.lineTo(W - edgeIn, ty);
+      });
+      ctx.stroke();
+      files.push({ name: `Selphy_${String(i / 2 + 1).padStart(2, '0')}_${pair.map(c => pad3(c.no)).join('+')}.png`, canvas: cv });
+    }
+  }
+  for (const f of files) {
+    const blob = await new Promise(r => f.canvas.toBlob(r, 'image/png'));
+    const url = URL.createObjectURL(blob);
+    const file = new File([blob], f.name, { type: 'image/png' });
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    out.append(h('div', { class: 'sheetout' }, h('img', { src: url, alt: f.name }), h('span', { class: 'hint', text: f.name }),
+      h('div', { class: 'btnrow' },
+        canShare ? h('button', { class: 'btn accent small', type: 'button', onclick: () => navigator.share({ files: [file], title: f.name }).catch(() => {}) }, '分享到 Selphy') : null,
+        h('button', { class: 'btn small', type: 'button', onclick: () => saveFile(blob, f.name) }, '下載'))));
+  }
+  btn.disabled = false; btn.textContent = '產生列印檔';
+  toast(`產生了 ${files.length} 個檔案`);
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function saveFile(blob, name) {
+  try {
+    if (window.claude && window.claude.use) { const dl = await window.claude.use('downloads'); if (dl) { await dl.save({ filename: name, data: blob }); return; } }
+  } catch (e) { if (e && e.code === 'declined') return; }
+  const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+
+/* ============================================================
+   爸媽：孩子與設定
+   ============================================================ */
+const KID_COLORS = ['#4FB3F6', '#FF7A59', '#5CC46B', '#A77BF3', '#FFB020', '#FF6FA8'];
+function renderKids() {
+  const v = $('#v-kids'); v.textContent = '';
+  v.append(h('div', { class: 'view-head' }, h('div', null, h('h2', { text: '孩子與系列' }), h('p', { class: 'sub', text: '每個孩子有自己的圖鑑。卡片送給誰，在卡片詳情裡標記。' }))));
+  const listEl = h('div', { class: 'kidlist' });
+  const total = finals().filter(c => !c.reward).length;
+  if (!DATA.kids.length) listEl.append(h('div', { class: 'empty' }, h('p', { text: '還沒有孩子的資料，先新增一位。' })));
+  DATA.kids.forEach(k => {
+    const n = DATA.owned.filter(o => o.kidId === k.id && DATA.cards.some(c => c.id === o.cardId)).length;
+    const row = h('div', { class: 'kidrow' }, avatar(k, true), h('div', { class: 'grow' }, h('strong', { text: k.name }), h('div', { class: 'hint', text: `收集 ${n} / ${total}` })));
+    const del = h('button', { class: 'btn small danger', type: 'button', onclick: () => {
+      del.replaceWith(h('span', { class: 'btnrow', style: 'flex:none' },
+        h('button', { class: 'btn small', type: 'button', onclick: renderKids }, '不要'),
+        h('button', { class: 'btn small danger', type: 'button', onclick: async () => { try { await store.deleteKid(k.id); DATA.kids = DATA.kids.filter(x => x.id !== k.id); DATA.owned = DATA.owned.filter(o => o.kidId !== k.id); renderKids(); toast('已移除'); } catch (e) { toast(e.message); } } }, '確定移除')));
+    } }, '移除');
+    row.append(del); listEl.append(row);
+  });
+  let color = KID_COLORS[DATA.kids.length % KID_COLORS.length];
+  const nameIn = h('input', { type: 'text', id: 'kName', maxlength: 8, placeholder: '例：哥哥', required: true });
+  const addForm = h('form', { class: 'group' }, h('h3', { text: '新增孩子' }),
+    h('div', { class: 'field' }, h('label', { for: 'kName', text: '圖鑑上顯示的名字' }), nameIn),
+    chipGroup('代表色', KID_COLORS.map(c => [c, '', c]), color, k => { color = k; }, 'kColor'),
+    h('div', { class: 'savebar' }, h('button', { class: 'btn primary', type: 'submit' }, '新增')));
+  addForm.onsubmit = async e => {
+    e.preventDefault(); const name = nameIn.value.trim(); if (!name) return;
+    try { const kid = await store.saveKid({ id: 'k_' + uid(), name, color }); DATA.kids = DATA.kids.concat(kid); renderKids(); toast(`已新增 ${name}`); } catch (x) { toast(x.message); }
+  };
+  // 系列（只是圖鑑上的分類，編號全部一路往下編）
+  const saveSettings = async patch => {
+    try { DATA.settings = normSettings(await store.saveSettings(patch)); thumbCache.clear(); renderKids(); toast('已儲存'); } catch (x) { toast(x.message); }
+  };
+  const serGroup = h('div', { class: 'group' }, h('h3', { text: '系列（圖鑑分類）' }),
+    h('p', { class: 'hint', text: '系列只用來在圖鑑上分類，例如「九州」。卡片編號不分系列，全部一路往下編。' }));
+  seriesList().forEach((s, i) => {
+    const used = DATA.cards.filter(c => sidOf(c) === s.id).length;
+    const nameIn = h('input', { type: 'text', id: 'serName' + i, maxlength: 8, 'aria-label': `${s.name}系列名稱` }); nameIn.value = s.name;
+    serGroup.append(h('div', { class: 'kidrow' }, h('div', { class: 'grow field' }, nameIn, h('span', { class: 'hint', text: `${used} 張卡` })),
+      h('button', { class: 'btn small', type: 'button', onclick: () => saveSettings({ series: seriesList().map(x => x.id === s.id ? { ...x, name: nameIn.value.trim() || x.name } : x) }) }, '改名'),
+      s.id !== 'base' && !used ? h('button', { class: 'btn small danger', type: 'button', onclick: () => saveSettings({ series: seriesList().filter(x => x.id !== s.id) }) }, '刪除') : null));
+  });
+  const newSerName = h('input', { type: 'text', id: 'serNew', maxlength: 8, placeholder: '例：九州' });
+  const serForm = h('form', { class: 'field' }, h('label', { for: 'serNew', text: '新增系列' }), newSerName, h('div', { class: 'savebar' }, h('button', { class: 'btn primary', type: 'submit' }, '新增系列')));
+  serForm.onsubmit = e => { e.preventDefault(); const name = newSerName.value.trim(); if (name) saveSettings({ series: seriesList().concat({ id: 's_' + uid(), name }) }); };
+  serGroup.append(serForm);
+
+  // 卡片總數
+  const totalIn = h('input', { type: 'number', id: 'sTotal', min: 1, max: 999, inputmode: 'numeric' }); totalIn.value = DATA.settings.total;
+  const totalForm = h('form', { class: 'group' }, h('h3', { text: '卡片總數' }),
+    h('div', { class: 'field' }, h('label', { for: 'sTotal', text: '卡片右下角「012 / 050」的總數' }), totalIn),
+    h('div', { class: 'savebar' }, h('button', { class: 'btn', type: 'submit' }, '儲存')));
+  totalForm.onsubmit = e => { e.preventDefault(); saveSettings({ total: Math.max(1, Math.min(999, Number(totalIn.value) || 50)) }); };
+
+  // 招式庫
+  const skillGroup = h('div', { class: 'group' }, h('h3', { text: '招式庫' }),
+    h('p', { class: 'hint', text: '新增或修改招式，做新卡時就能選。已經做好的卡不會跟著變。' }));
+  const energyOpts = [['', '—'], ['any', '任意'], ...ATTR_KEYS.map(k => [k, ATTR[k].name])];
+  const skillForm = (sk, onDone) => {
+    const f = h('form', { class: 'group', style: 'background:var(--chip)' });
+    const nameIn = h('input', { type: 'text', id: 'skName', maxlength: 8, required: true }); nameIn.value = sk.name || '';
+    const grpSel = h('select', { id: 'skGroup' }); SKILL_GROUP_KEYS.forEach(([k, l]) => grpSel.append(h('option', { value: k, text: l }))); grpSel.value = sk.group || 'family';
+    const costSels = [0, 1, 2].map(i => { const sel = h('select', { id: 'skCost' + i, 'aria-label': `能量 ${i + 1}` }); energyOpts.forEach(([k, l]) => sel.append(h('option', { value: k, text: l }))); sel.value = (sk.cost || [])[i] || (i === 0 ? 'any' : ''); return sel; });
+    const dmgIn = h('input', { type: 'text', id: 'skDmg', maxlength: 4, placeholder: '例：30 或 30+' }); dmgIn.value = sk.dmg || '';
+    const fxIn = h('input', { type: 'text', id: 'skFx', maxlength: 24, placeholder: '沒有效果就空白' }); fxIn.value = sk.effect && sk.effect !== '—' ? sk.effect : '';
+    f.append(
+      h('div', { class: 'row2' }, h('div', { class: 'field' }, h('label', { for: 'skName', text: '招式名稱' }), nameIn), h('div', { class: 'field' }, h('label', { for: 'skGroup', text: '分類' }), grpSel)),
+      h('div', { class: 'field' }, h('span', { class: 'label', text: '需要的能量（最多 3 顆）' }), h('div', { class: 'chips' }, costSels)),
+      h('div', { class: 'row2' }, h('div', { class: 'field' }, h('label', { for: 'skDmg', text: '傷害' }), dmgIn), h('div', { class: 'field' }, h('label', { for: 'skFx', text: '效果' }), fxIn)),
+      h('div', { class: 'savebar' }, h('button', { class: 'btn primary', type: 'submit' }, '儲存招式'), h('button', { class: 'btn', type: 'button', onclick: onDone }, '取消')));
+    f.onsubmit = e => {
+      e.preventDefault();
+      const cost = costSels.map(s => s.value).filter(Boolean);
+      if (!nameIn.value.trim() || !cost.length) { toast('招式要有名稱和至少 1 顆能量'); return; }
+      const item = { id: sk.id || 'sk_' + uid(), name: nameIn.value.trim(), group: grpSel.value, cost, dmg: dmgIn.value.trim() || '0', effect: fxIn.value.trim() || '—' };
+      const lib = skillLib().slice(), idx = lib.findIndex(x => x.id === item.id);
+      if (idx >= 0) lib[idx] = item; else lib.push(item);
+      saveSettings({ skills: lib });
+    };
+    return f;
+  };
+  const addSkillBtn = h('button', { class: 'btn primary', type: 'button' }, '新增招式');
+  addSkillBtn.onclick = () => { const f = skillForm({}, renderKids); addSkillBtn.replaceWith(f); f.querySelector('input').focus(); };
+  SKILL_GROUP_KEYS.forEach(([k, label]) => {
+    const list = skillLib().filter(s => (s.group || 'family') === k); if (!list.length) return;
+    skillGroup.append(h('strong', { text: label }));
+    list.forEach(s => {
+      const row = h('div', { class: 'kidrow' },
+        h('span', { class: 'chips', style: 'flex:none;gap:3px' }, s.cost.map(c => h('span', { class: 'dot', style: `width:16px;height:16px;background:${ATTR[c].bg};box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)`, title: ATTR[c].name }))),
+        h('div', { class: 'grow' }, h('strong', { text: `${s.name}　${s.dmg}` }), s.effect && s.effect !== '—' ? h('div', { class: 'hint', text: s.effect }) : null));
+      const editBtn = h('button', { class: 'btn small', type: 'button', onclick: () => row.replaceWith(skillForm(s, renderKids)) }, '修改');
+      const delBtn = h('button', { class: 'btn small danger', type: 'button', onclick: () => {
+        delBtn.replaceWith(h('button', { class: 'btn small danger', type: 'button', onclick: () => saveSettings({ skills: skillLib().filter(x => x.id !== s.id) }) }, '確定刪除'));
+      } }, '刪除');
+      row.append(editBtn, delBtn); skillGroup.append(row);
+    });
+  });
+  skillGroup.append(addSkillBtn);
+
+  const pwNote = h('div', { class: 'group' }, h('h3', { text: '家庭密碼' }), h('p', { class: 'hint', text: DEMO ? '示範模式不需要密碼。' : '家庭密碼在 Apps Script 的指令碼屬性 FAMILY_PASSWORD 修改；改了以後，孩子的平板要重新輸入一次。' }));
+  v.append(listEl, addForm, serGroup, totalForm, skillGroup, pwNote);
+}
+
+const RENDER = { cards: renderCards, print: renderPrint, kids: renderKids, dex: renderDex, kidpick: renderKidPick };
+
+/* ---- 編輯時的小預覽（手機） ---- */
+document.body.append(h('button', { class: 'mini', id: 'mini', type: 'button', hidden: true, 'aria-label': '捲到預覽', onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }, h('img', { id: 'miniImg', alt: '' })));
+
+/* ============================================================
+   啟動
+   ============================================================ */
+(async function boot() {
+  $('#demoBanner').hidden = !DEMO;
+  const dev = lsGet('fc-device'), cache = lsGet('fc-cache');
+  if (cache && cache.cards) DATA = { cards: cache.cards, kids: cache.kids || [], owned: cache.owned || [], settings: normSettings(cache.settings) };
+  if (dev && dev.mode === 'kid') {
+    ROLE = 'viewer'; AUTH = DEMO ? null : { familyPassword: dev.pw };
+    const pick = () => { KID = DATA.kids.find(k => k.id === dev.kidId) || null; if (KID) { show('dex'); renderDex(); } else { renderKidPick(); show('kidpick'); } };
+    if (cache && cache.cards) pick();
+    try { await loadData(); ROLE = 'viewer'; pick(); } catch (e) { if (!cache) { renderLogin(); show('login'); } }
+    return;
+  }
+  if (dev && dev.mode === 'parent' && DEMO) { ROLE = 'editor'; await loadData(); enterParent(); return; }
+  renderLogin(); show('login');
+  if (dev && dev.mode === 'parent' && !DEMO && CONFIG.GOOGLE_CLIENT_ID) { const b = document.querySelector('#v-login .btn.primary'); b && b.click(); }
+})();
+})();
+</script>
