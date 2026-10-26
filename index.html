@@ -368,6 +368,35 @@ SKILL_GROUPS.forEach((g, gi) => g.skills.forEach(([id, name, cost, dmg, effect])
 /* 招式庫存在設定裡，可新增修改；卡片做好時會把招式內容存進卡片，之後改招式庫不影響舊卡 */
 const skillLib = () => (typeof DATA !== 'undefined' && DATA.settings && Array.isArray(DATA.settings.skills) && DATA.settings.skills.length) ? DATA.settings.skills : DEFAULT_SKILLS;
 const skillById = id => skillLib().find(s => s.id === id) || null;
+/* 任務獎勵庫：可在設定新增修改；任務卡做好時把獎勵內容存進卡片 */
+const PRIZE_ICONS = [['sticker', '貼紙'], ['coin', '零用錢'], ['gift', '禮物'], ['heart', '一起玩']];
+const DEFAULT_PRIZES = [
+  { id: 'pz_s1', name: '貼紙 ×1', icon: 'sticker' }, { id: 'pz_s2', name: '貼紙 ×2', icon: 'sticker' }, { id: 'pz_s3', name: '貼紙 ×3', icon: 'sticker' },
+  { id: 'pz_m50', name: '零用錢 50 元', icon: 'coin' }, { id: 'pz_car', name: '小車車一台', icon: 'gift' }
+];
+const prizeLib = () => (typeof DATA !== 'undefined' && DATA.settings && Array.isArray(DATA.settings.prizes) && DATA.settings.prizes.length) ? DATA.settings.prizes : DEFAULT_PRIZES;
+const prizeOf = m => (m && m.prize && m.prize.name) ? m.prize : { name: `貼紙 ×${Number(m && m.reward) || 1}`, icon: 'sticker' };
+function prizeIcon(ctx, kind, cx, cy, d) {
+  const r = d / 2; ctx.save(); ctx.lineJoin = 'round';
+  if (kind === 'coin') {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#F2C14E'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#9A6A00'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, r * .72, 0, Math.PI * 2); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#7A5200'; ctx.font = F.sans(900, d * .5); ctx.textAlign = 'center'; ctx.fillText('元', cx, cy + d * .18); ctx.textAlign = 'left';
+  } else if (kind === 'gift') {
+    const w = d * .9, h0 = d * .62, x = cx - w / 2, y = cy - h0 / 2 + d * .12;
+    rr(ctx, x, y, w, h0, 3); ctx.fillStyle = '#FF7EB6'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#8A1F4E'; ctx.stroke();
+    rr(ctx, x - 2, y - d * .16, w + 4, d * .2, 3); ctx.fillStyle = '#FF9EC6'; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#F2C14E'; ctx.fillRect(cx - d * .08, y - d * .16, d * .16, h0 + d * .16);
+    ctx.beginPath(); ctx.ellipse(cx - d * .16, y - d * .24, d * .15, d * .09, -.5, 0, Math.PI * 2); ctx.ellipse(cx + d * .16, y - d * .24, d * .15, d * .09, .5, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#9A6A00'; ctx.stroke();
+  } else if (kind === 'heart') {
+    glyph(ctx, ICON.heart, cx, cy, d * 1.15, '#FF6B7A');
+  } else {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#FFD54A'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#9A6A00'; ctx.stroke();
+    star(ctx, cx, cy, d * .62, '#FFFFFF');
+    ctx.beginPath(); ctx.moveTo(cx + r * .35, cy + r * .94); ctx.quadraticCurveTo(cx + r * .55, cy + r * .45, cx + r * .94, cy + r * .35); ctx.lineTo(cx + r * .7, cy + r * .72); ctx.closePath(); ctx.fillStyle = '#FFF4C2'; ctx.fill(); ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  ctx.restore();
+}
 
 const ITEM_EFFECTS = ['裝備的角色 HP +30', '裝備的角色招式傷害 +10', '裝備的角色受到的傷害 −10', '裝備的角色被剋時不會 ×2'];
 const BOOST_EFFECTS = ['我方上場角色的 HP 回復 30', '這一回合招式傷害 +30', '馬上多拿 1 顆能量', '對手的上場角色丟掉 1 顆能量', '把 1 張待命角色換上場', '擲硬幣 2 次，每個正面回復 HP 20'];
@@ -835,8 +864,10 @@ const SECTION = {
     lines.forEach((l, i) => ctx.fillText(l, CX, y + 27 + i * 36)); y += lines.length * 36 + 12;
     rr(ctx, CX, y, CW, 58, 14); ctx.fillStyle = th.box; ctx.fill();
     const lw = labelTag(ctx, CX + 16, y + 15.5, '完成獎勵', th.pill);
-    star(ctx, CX + 16 + lw + 14 + 17, y + 29, 34, '#F2B200', '#9A6A00');
-    ctx.font = F.sans(900, 25); ctx.fillStyle = th.text; ctx.fillText(`星星 ×${Number(m.reward) || 1}`, CX + 16 + lw + 14 + 42, y + 38);
+    const pz = prizeOf(m);
+    prizeIcon(ctx, pz.icon, CX + 16 + lw + 14 + 17, y + 29, 34);
+    const avail = CW - 16 - lw - 14 - 42 - 12, pfs = fitSize(ctx, pz.name, z => F.sans(900, z), 25, 17, avail);
+    ctx.font = F.sans(900, pfs); ctx.fillStyle = th.text; ctx.fillText(clip(ctx, pz.name, avail), CX + 16 + lw + 14 + 42, y + 29 + pfs * .36);
     y += 58 + 12;
     ctx.font = F.sans(700, 18); ctx.fillStyle = th.muted; ctx.fillText('完成蓋章', CX, y + 18); y += 28;
     ctx.save(); ctx.setLineDash([7, 6]); ctx.lineWidth = 3; ctx.strokeStyle = th.stamp;
@@ -916,7 +947,7 @@ function drawCard(ctx, card, img, opt = {}) {
 /* ---- 字型：中文字型按字切片載入，畫之前先載入用到的字 ---- */
 const FONT_SPECS = ['900 40px "Noto Sans TC"', '700 30px "Noto Sans TC"', '500 18px "Noto Sans TC"', '500 21px "Noto Sans TC"', '700 40px "Fredoka"', '600 20px "Fredoka"', '500 16px "Fredoka"', '900 40px "Noto Serif TC"', '700 19px "Noto Serif TC"'];
 const FIXED_TEXT = (() => {
-  const parts = ['0123456789HP×−+/:. ★角色卡場景任務道具強化家人朋友寵物弱點抗性場地效果沒有完成獎勵星星蓋章裝備效果每個角色只能裝備個道具用一次限定系列普通閃卡難度可重複使用用完放到棄牌區作者放入照片未命名請選擇招式屬性的招式傷害寫下任務內容集滿的No?…'];
+  const parts = ['0123456789HP×−+/:. ★角色卡場景任務道具強化家人朋友寵物弱點抗性場地效果沒有完成獎勵貼紙零用元蓋章裝備效果每個角色只能裝備個道具用一次限定系列普通閃卡難度可重複使用用完放到棄牌區作者放入照片未命名請選擇招式屬性的招式傷害寫下任務內容集滿的No?…'];
   Object.values(ATTR).forEach(a => parts.push(a.name)); Object.values(FRAMES).forEach(f => parts.push(f.name));
   Object.values(SKILL).forEach(s => parts.push(s.name, s.effect)); parts.push(...ITEM_EFFECTS, ...BOOST_EFFECTS);
   return [...new Set(parts.join(''))].join('');
@@ -924,7 +955,7 @@ const FIXED_TEXT = (() => {
 const fontDone = new Set();
 async function ensureFonts(card) {
   if (!document.fonts || !document.fonts.load) return;
-  const txt = [card.name, card.tag, card.place, card.date, card.story, card.mission?.text, card.item?.author, card.item?.age, card.item?.effect, card.boost?.effect, ...seriesList().map(s => s.name), ...(card.skillData || []).flatMap(s => [s.name, s.effect]), ...(card.skills || []).map(id => skillById(id)).filter(Boolean).flatMap(s => [s.name, s.effect])].filter(Boolean).join('');
+  const txt = [card.name, card.tag, card.place, card.date, card.story, card.mission?.text, card.mission?.prize?.name, ...prizeLib().map(x => x.name), card.item?.author, card.item?.age, card.item?.effect, card.boost?.effect, ...seriesList().map(s => s.name), ...(card.skillData || []).flatMap(s => [s.name, s.effect]), ...(card.skills || []).map(id => skillById(id)).filter(Boolean).flatMap(s => [s.name, s.effect])].filter(Boolean).join('');
   const need = [...new Set(FIXED_TEXT + txt)].filter(ch => !fontDone.has(ch)).join('');
   if (!need) return;
   await Promise.race([Promise.all(FONT_SPECS.map(f => document.fonts.load(f, need).catch(() => {}))), new Promise(r => setTimeout(r, 5000))]);
@@ -949,6 +980,7 @@ function normSettings(s) {
   if (!s.series.some(x => x.id === 'base')) s.series.unshift({ id: 'base', name: '基本' });
   s.total = Number(s.total) || Number(s.seriesTotal) || 50;
   if (!Array.isArray(s.skills) || !s.skills.length) s.skills = clone(DEFAULT_SKILLS);
+  if (!Array.isArray(s.prizes) || !s.prizes.length) s.prizes = clone(DEFAULT_PRIZES);
   return s;
 }
 let AUTH = null, ROLE = null, DATA = { cards: [], kids: [], owned: [], settings: DEFAULT_SETTINGS() }, KID = null;
@@ -1009,7 +1041,7 @@ function seedDemo() {
   const cards = [
     { ...base, id: 'c_demo1', no: 1, type: 'character', name: '超人爸爸（範例）', attr: 'fire', hp: 120, skills: ['fly', 'hug2'], story: '換上自己的照片，就是你家的第一張卡。' },
     { ...base, id: 'c_demo2', no: 2, type: 'scene', name: '海邊沙灘（範例）', sceneEffects: [{ attr: 'water', delta: 10 }, { attr: 'fire', delta: -10 }], effect: 'sparkle' },
-    { ...base, id: 'c_demo3', no: 3, type: 'mission', name: '看書 10 分鐘', mission: { text: '安靜坐好，自己翻書看 10 分鐘。', minutes: 10, difficulty: 2, reward: 1 } },
+    { ...base, id: 'c_demo3', no: 3, type: 'mission', name: '看書 10 分鐘', mission: { text: '安靜坐好，自己翻書看 10 分鐘。', minutes: 10, difficulty: 2, prize: { id: 'pz_s1', name: '貼紙 ×1', icon: 'sticker' } } },
     { ...base, id: 'c_demo4', no: 4, type: 'character', name: '全家福（範例）', attr: 'grass', hp: 150, skills: ['forest', 'family'], rarity: 'holo' },
     { ...base, id: 'c_demo5', no: 5, type: 'character', name: '冠軍老大（範例）', attr: 'light', hp: 130, skills: ['rainbow', 'family'], rarity: 'limited', frame: 'gold', effect: 'sparkle', reward: { series: 'base' } }
   ];
@@ -1361,7 +1393,7 @@ async function openDetail(card) {
 let draft = null, draftPhoto = null, previewTimer = 0;
 function newCard() {
   return { id: 'c_' + uid(), no: 0, series: 'base', reward: null, type: 'character', name: '', tag: '家人', attr: 'fire', hp: 100, skills: ['fly', 'hug2'], rarity: 'normal', frame: 'ruins', effect: 'none', filter: 'none', date: ymNow(), place: '', story: '', photoId: '',
-    sceneEffects: [{ attr: 'water', delta: 10 }, { attr: '', delta: -10 }], mission: { text: '', minutes: 10, difficulty: 2, reward: 1 }, item: { author: '', age: '', effect: ITEM_EFFECTS[0] }, boost: { effect: BOOST_EFFECTS[0] } };
+    sceneEffects: [{ attr: 'water', delta: 10 }, { attr: '', delta: -10 }], mission: { text: '', minutes: 0, difficulty: 2, prize: clone(prizeLib()[0] || DEFAULT_PRIZES[0]) }, item: { author: '', age: '', effect: ITEM_EFFECTS[0] }, boost: { effect: BOOST_EFFECTS[0] } };
 }
 let editMode = 'new';
 const snapSkills = c => (c.skillData && c.skillData.length) ? clone(c.skillData) : (c.skills || []).map(id => skillById(id)).filter(Boolean).map(clone);
@@ -1494,11 +1526,12 @@ function renderEditor() {
     }
     if (draft.type === 'mission') {
       const m = draft.mission;
+      if (!m.prize || !m.prize.name) m.prize = clone(prizeLib()[0] || DEFAULT_PRIZES[0]);
       basic.append(
         textField('任務內容', 'fMt', m.text, val => { m.text = val; schedulePreview(); }, { area: true, max: 30, ph: '例：安靜坐好，自己翻書看 10 分鐘。', hint: '30 字以內，孩子聽爸媽唸就懂的說法最好' }),
-        h('div', { class: 'row2' },
-          textField('計時（分鐘）', 'fMm', m.minutes, val => { m.minutes = Math.max(0, Math.min(99, Number(val) || 0)); schedulePreview(); }, { type: 'number', min: 0, maxNum: 99, inputmode: 'numeric', hint: '填 0 就不顯示' }),
-          selectField('獎勵星星', 'fMr', [['1', '1 顆'], ['2', '2 顆'], ['3', '3 顆']], String(m.reward || 1), val => { m.reward = Number(val); schedulePreview(); })),
+        selectField('完成獎勵', 'fMr', prizeLib().map(x => [x.id, x.name]), (prizeLib().find(x => x.id === (m.prize && m.prize.id)) || prizeLib()[0] || {}).id, val => { m.prize = clone(prizeLib().find(x => x.id === val)); schedulePreview(); }),
+        h('p', { class: 'hint', text: '獎勵選項可以在「設定 › 任務獎勵」新增或修改，例如零用錢 50 元、小車車一台。' }),
+        chipGroup('計時', [[0, '不計時'], [5, '5 分'], [10, '10 分'], [15, '15 分'], [20, '20 分'], [30, '30 分']], Number(m.minutes) || 0, k => { m.minutes = k; schedulePreview(); }, 'fMm'),
         chipGroup('難度', [[1, '★'], [2, '★★'], [3, '★★★']], Number(m.difficulty) || 1, k => { m.difficulty = k; schedulePreview(); }, 'fMd'));
     }
     if (draft.type === 'item') {
@@ -1860,8 +1893,38 @@ function renderKids() {
   });
   skillGroup.append(addSkillBtn);
 
+  // 任務獎勵
+  const prizeGroup = h('div', { class: 'group' }, h('h3', { text: '任務獎勵' }),
+    h('p', { class: 'hint', text: '做任務卡時可以選的獎勵。已經做好的卡不會跟著變。' }));
+  const prizeForm = (pz, onDone) => {
+    const f = h('form', { class: 'group', style: 'background:var(--chip)' });
+    const nameIn = h('input', { type: 'text', id: 'pzName', maxlength: 14, required: true, placeholder: '例：零用錢 50 元' }); nameIn.value = pz.name || '';
+    let icon = pz.icon || 'sticker';
+    f.append(h('div', { class: 'field' }, h('label', { for: 'pzName', text: '獎勵內容' }), nameIn),
+      chipGroup('圖示', PRIZE_ICONS, icon, k => { icon = k; }, 'pzIcon'),
+      h('div', { class: 'savebar' }, h('button', { class: 'btn primary', type: 'submit' }, '儲存獎勵'), h('button', { class: 'btn', type: 'button', onclick: onDone }, '取消')));
+    f.onsubmit = e => {
+      e.preventDefault(); const name = nameIn.value.trim(); if (!name) return;
+      const item = { id: pz.id || 'pz_' + uid(), name, icon }, lib = prizeLib().slice(), i = lib.findIndex(x => x.id === item.id);
+      if (i >= 0) lib[i] = item; else lib.push(item);
+      saveSettings({ prizes: lib });
+    };
+    return f;
+  };
+  prizeLib().forEach(pz => {
+    const ic = h('canvas', { width: 64, height: 64, 'aria-hidden': 'true', style: 'width:32px;height:32px;flex:none' });
+    const g = ic.getContext('2d'); g.scale(64 / 40, 64 / 40); prizeIcon(g, pz.icon, 20, 21, 30);
+    const row = h('div', { class: 'kidrow' }, ic, h('div', { class: 'grow' }, h('strong', { text: pz.name })));
+    const delBtn = h('button', { class: 'btn small danger', type: 'button', onclick: () => delBtn.replaceWith(h('button', { class: 'btn small danger', type: 'button', onclick: () => saveSettings({ prizes: prizeLib().filter(x => x.id !== pz.id) }) }, '確定刪除')) }, '刪除');
+    row.append(h('button', { class: 'btn small', type: 'button', onclick: () => row.replaceWith(prizeForm(pz, renderKids)) }, '修改'), delBtn);
+    prizeGroup.append(row);
+  });
+  const addPrizeBtn = h('button', { class: 'btn primary', type: 'button' }, '新增獎勵');
+  addPrizeBtn.onclick = () => { const f = prizeForm({}, renderKids); addPrizeBtn.replaceWith(f); f.querySelector('input').focus(); };
+  prizeGroup.append(addPrizeBtn);
+
   const pwNote = h('div', { class: 'group' }, h('h3', { text: '家庭密碼' }), h('p', { class: 'hint', text: DEMO ? '示範模式不需要密碼。' : '家庭密碼在 Apps Script 的指令碼屬性 FAMILY_PASSWORD 修改；改了以後，孩子的平板要重新輸入一次。' }));
-  v.append(listEl, addForm, serGroup, totalForm, skillGroup, pwNote);
+  v.append(listEl, addForm, serGroup, totalForm, skillGroup, prizeGroup, pwNote);
 }
 
 const RENDER = { cards: renderCards, print: renderPrint, kids: renderKids, dex: renderDex, kidpick: renderKidPick };
