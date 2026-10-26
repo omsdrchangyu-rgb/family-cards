@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="Fami Heroes">
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#FFF6EC">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
 <style>
 /* Layout: one column app shell, sticky header, bottom tab bar for parents; card art drawn on canvas at 63×88mm */
 :root{
@@ -85,7 +85,10 @@ main{max-width:1100px;margin:0 auto;padding-block:16px calc(110px + env(safe-are
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field>label,.field>.label{font-weight:700;font-size:15px}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-input[type=text],input[type=number],input[type=password],input[type=month],select,textarea{min-height:44px;width:100%;border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:500 16px var(--font);background:var(--surface);color:var(--ink)}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left;line-height:1.3}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+.row2>*{min-width:0}
+input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{min-height:44px;width:100%;border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:500 16px var(--font);background:var(--surface);color:var(--ink)}
 textarea{min-height:76px;resize:vertical}
 .hint{font-size:13px;color:var(--muted)}
 .note{font-size:14px;background:var(--accent-soft);border-radius:10px;padding:8px 12px}
@@ -274,7 +277,8 @@ function h(tag, attrs, ...kids) {
 }
 const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 const pad3 = n => String(n || 0).padStart(3, '0');
-const ymNow = () => { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0'); };
+const ymNow = () => { const d = new Date(); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('.'); };
+const dateToInput = d => /^\d{4}\.\d{2}\.\d{2}$/.test(d || '') ? d.replace(/\./g, '-') : /^\d{4}\.\d{2}$/.test(d || '') ? d.replace('.', '-') + '-01' : '';
 const clone = o => JSON.parse(JSON.stringify(o));
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600); }
 const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -383,7 +387,6 @@ const photoAspect = type => (CW - photoInset(type) * 2) / (PHOTO_BOX[type] - pho
 const F = {
   sans: (w, s) => `${w} ${s}px "Noto Sans TC","PingFang TC","Heiti TC",sans-serif`,
   num: (w, s) => `${w} ${s}px "Fredoka","Noto Sans TC",sans-serif`,
-  hand: s => `400 ${s}px "LXGW WenKai TC","Noto Sans TC",serif`,
   serif: (w, s) => `${w} ${s}px "Noto Serif TC","Noto Sans TC",serif`
 };
 
@@ -673,7 +676,7 @@ function theme(card, skin) {
     const T = TYPE[card.type];
     t = { frame: T.frame, pill: T.pill, pillInk: '#FFFFFF', tint: T.tint, ink: T.ink, box: T.box, photoBorder: T.photoBorder, label: T.label, icon: T.icon };
   }
-  Object.assign(t, { panel: '#FFF9EF', text: '#2B2340', muted: '#5E5470', foot: '#6E6380', line: '#F0D9C4', star: '#F2B200', starStroke: '#9A6A00', stamp: '#FF9EC6', nameFont: s => F.sans(900, s), storyFont: s => F.hand(s) });
+  Object.assign(t, { panel: '#FFF9EF', text: '#2B2340', muted: '#5E5470', foot: '#6E6380', line: '#F0D9C4', star: '#F2B200', starStroke: '#9A6A00', stamp: '#FF9EC6', nameFont: s => F.sans(900, s), storyFont: s => F.sans(500, s) });
   if (card.rarity === 'holo') Object.assign(t, { photoBorder: card.type === 'item' ? t.photoBorder : '#F2C14E', tint: '#FFF0C2', ink: '#6E4A00', foot: '#6E4A00' });
   if (skin.theme) Object.assign(t, skin.theme(t));
   return t;
@@ -911,7 +914,7 @@ function drawCard(ctx, card, img, opt = {}) {
 }
 
 /* ---- 字型：中文字型按字切片載入，畫之前先載入用到的字 ---- */
-const FONT_SPECS = ['900 40px "Noto Sans TC"', '700 30px "Noto Sans TC"', '500 18px "Noto Sans TC"', '400 21px "LXGW WenKai TC"', '700 40px "Fredoka"', '600 20px "Fredoka"', '500 16px "Fredoka"', '900 40px "Noto Serif TC"', '700 19px "Noto Serif TC"'];
+const FONT_SPECS = ['900 40px "Noto Sans TC"', '700 30px "Noto Sans TC"', '500 18px "Noto Sans TC"', '500 21px "Noto Sans TC"', '700 40px "Fredoka"', '600 20px "Fredoka"', '500 16px "Fredoka"', '900 40px "Noto Serif TC"', '700 19px "Noto Serif TC"'];
 const FIXED_TEXT = (() => {
   const parts = ['0123456789HP×−+/:. ★角色卡場景任務道具強化家人朋友寵物弱點抗性場地效果沒有完成獎勵星星蓋章裝備效果每個角色只能裝備個道具用一次限定系列普通閃卡難度可重複使用用完放到棄牌區作者放入照片未命名請選擇招式屬性的招式傷害寫下任務內容集滿的No?…'];
   Object.values(ATTR).forEach(a => parts.push(a.name)); Object.values(FRAMES).forEach(f => parts.push(f.name));
@@ -959,11 +962,13 @@ const LocalStore = {
   },
   async bootstrap() { const s = clone(await this.state()); if (ROLE !== 'editor') s.cards = s.cards.filter(c => c.status !== 'draft'); return { ...s, role: ROLE }; },
   async getPhotos(ids) { const out = {}; for (const id of ids) { const d = await kv.get('photo:' + id); if (d) out[id] = d; } return out; },
-  async saveCard(card, photo) {
+  async saveCard(card, photo, orig) {
     const s = await this.state();
     const prev = s.cards.find(c => c.id === card.id);
     if (photo) { const pid = 'p_' + uid(); await kv.set('photo:' + pid, photo); if (prev && prev.photoId) kv.del('photo:' + prev.photoId); card.photoId = pid; }
     else card.photoId = prev ? prev.photoId : (card.photoId || '');
+    if (orig) { const oid = 'p_' + uid(); await kv.set('photo:' + oid, orig); if (prev && prev.origPhotoId) kv.del('photo:' + prev.origPhotoId); card.origPhotoId = oid; }
+    else card.origPhotoId = prev ? (prev.origPhotoId || '') : (card.origPhotoId || '');
     card.series = card.series || 'base';
     card.no = card.status === 'draft' ? 0 : (prev && prev.status !== 'draft' && prev.no ? prev.no : nextNoIn(s.cards));
     card.updatedAt = Date.now();
@@ -988,7 +993,7 @@ async function api(action, payload = {}) {
 const RemoteStore = {
   bootstrap: () => api('bootstrap'),
   getPhotos: ids => api('getPhotos', { ids }),
-  saveCard: (card, photo) => api('saveCard', { card, photo: photo ? photo.split(',')[1] : null }),
+  saveCard: (card, photo, orig) => api('saveCard', { card, photo: photo ? photo.split(',')[1] : null, orig: orig ? orig.split(',')[1] : null }),
   deleteCard: id => api('deleteCard', { id }),
   saveKid: kid => api('saveKid', { kid }),
   deleteKid: id => api('deleteKid', { id }),
@@ -1369,7 +1374,10 @@ function openEditor(card, mode) {
   } else if (editMode === 'draft') {
     draft = Object.assign(newCard(), clone(card)); delete draft.skillData;
     if (draft.type === 'character' && card.skillData && card.skillData.length) draft.skills = card.skillData.map((sk, i) => skillById(sk.id) ? sk.id : (draft.skills || [])[i]);
-    draftPhoto = card.photoId && IMG.get(card.photoId) ? { img: IMG.get(card.photoId), isNew: false } : null;
+    draftPhoto = card.photoId && IMG.get(card.photoId) ? { img: IMG.get(card.photoId), isNew: false, cropState: card.cropState || null } : null;
+    if (draftPhoto && card.origPhotoId) {
+      loadPhotos([card.origPhotoId]).then(() => { const oi = IMG.get(card.origPhotoId); if (oi && draftPhoto && draft && draft.id === card.id) { draftPhoto.orig = { img: oi, isNew: false }; if (current === 'editor') renderEditor(); } });
+    }
   } else {
     draft = Object.assign(newCard(), clone(card)); draft.skillData = snapSkills(card);
     draftPhoto = card.photoId && IMG.get(card.photoId) ? { img: IMG.get(card.photoId), isNew: false } : null;
@@ -1408,8 +1416,8 @@ function renderEditor() {
   v.append(h('div', { class: 'view-head' }, h('h2', { text: title })), h('div', { class: 'editor' }, preview, form));
   const set = (k, val) => { draft[k] = val; schedulePreview(); };
   const monthField = () => {
-    const monthIn = h('input', { type: 'month', id: 'fDate' }); monthIn.value = (draft.date || '').replace('.', '-');
-    monthIn.addEventListener('input', () => set('date', monthIn.value ? monthIn.value.replace('-', '.') : ''));
+    const monthIn = h('input', { type: 'date', id: 'fDate' }); monthIn.value = dateToInput(draft.date);
+    monthIn.addEventListener('change', () => set('date', monthIn.value ? monthIn.value.replace(/-/g, '.') : ''));
     return h('div', { class: 'field' }, h('label', { for: 'fDate', text: '日期' }), monthIn);
   };
   const storyField = () => textField('一句小故事', 'fStory', draft.story, val => set('story', val), { area: true, max: 40, ph: '這張照片背後的故事，多年後最珍貴的就是這一行', hint: '40 字以內，空白就不印' });
@@ -1443,7 +1451,7 @@ function renderEditor() {
   const photoGroup = h('div', { class: 'group' }, h('h3', { text: '照片' }),
     h('div', { class: 'btnrow' },
       h('button', { class: 'btn primary', type: 'button', onclick: () => fileIn.click() }, draftPhoto ? '換一張照片' : '選照片'),
-      draftPhoto && draftPhoto.file ? h('button', { class: 'btn', type: 'button', onclick: () => openCropper(draftPhoto.file) }, '重新裁切') : null),
+      draftPhoto && draftPhoto.img ? h('button', { class: 'btn', type: 'button', onclick: () => recrop() }, '重新裁切') : null),
     fileIn);
   if (mode === 'variant' && !draftPhoto) photoGroup.append(h('p', { class: 'hint', text: '異圖：名稱、招式和數值都跟原卡一樣，換一張照片和框就是新的收藏。' }));
   if (draftPhoto && draftPhoto.img) {
@@ -1551,23 +1559,49 @@ async function saveDraft(e, status) {
     if (editMode !== 'fix') card.status = status === 'draft' ? 'draft' : 'final';
     if ((editMode === 'new' || editMode === 'draft') && card.type === 'character') card.skillData = (card.skills || []).map(id => skillById(id)).filter(Boolean).map(clone);
     if (editMode === 'variant' && !(draftPhoto && draftPhoto.isNew)) { toast('異圖要換一張新照片'); btn.disabled = false; btn.textContent = label; return; }
-    const saved = await store.saveCard(card, draftPhoto && draftPhoto.isNew ? draftPhoto.dataUrl : null);
+    if (draftPhoto && draftPhoto.cropState) card.cropState = draftPhoto.cropState;
+    const origNew = draftPhoto && draftPhoto.isNew && draftPhoto.orig && draftPhoto.orig.isNew ? draftPhoto.orig.dataUrl : null;
+    const saved = await store.saveCard(card, draftPhoto && draftPhoto.isNew ? draftPhoto.dataUrl : null, origNew);
     if (draftPhoto && draftPhoto.isNew && saved.photoId) { IMG.set(saved.photoId, draftPhoto.img); if (!DEMO) kv.set('pc:' + saved.photoId, draftPhoto.dataUrl); }
+    if (origNew && saved.origPhotoId) { IMG.set(saved.origPhotoId, draftPhoto.orig.img); if (!DEMO) kv.set('pc:' + saved.origPhotoId, origNew); }
     DATA.cards = DATA.cards.filter(c => c.id !== saved.id).concat(saved);
     draft = null; draftPhoto = null; toast(saved.status === 'draft' ? `已存到暫存區：${saved.name}` : `已加入正式卡牌 ${pad3(saved.no)} ${saved.name}`); go('cards');
   } catch (x) { toast(x.message); btn.disabled = false; btn.textContent = label; }
 }
 
 /* ---- 裁切旋轉 ---- */
-const crop = { img: null, file: null, s: 1, base: 1, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0, frame: null, pointers: new Map(), pinch: null };
+const crop = { img: null, orig: null, pending: null, s: 1, base: 1, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0, frame: null, pointers: new Map(), pinch: null };
+async function downscale(img, max) {
+  const w = img.naturalWidth, h0 = img.naturalHeight, k = Math.min(1, max / Math.max(w, h0));
+  const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h0 * k);
+  const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+  const dataUrl = c.toDataURL('image/jpeg', .88); return { dataUrl, img: await loadImg(dataUrl) };
+}
 async function openCropper(file) {
-  let img;
-  try { img = await loadImg(URL.createObjectURL(file)); } catch (e) { toast('這張照片打不開，換一張試試'); return; }
-  Object.assign(crop, { img, file, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0 });
-  $('#cropZoom').value = 1; $('#cropRot').value = 0; $('#cropZoomOut').textContent = '1.0×'; $('#cropRotOut').textContent = '0°';
+  let raw;
+  try { raw = await loadImg(URL.createObjectURL(file)); } catch (e) { toast('這張照片打不開，換一張試試'); return; }
+  const orig = await downscale(raw, 2000);
+  startCrop({ ...orig, isNew: true }, null);
+}
+function recrop() {
+  if (!draftPhoto) return;
+  // 有原圖就從原圖重新裁；舊卡沒有原圖時，從目前的照片再裁（只能放大）
+  const orig = draftPhoto.orig || { img: draftPhoto.img, isNew: false, fromCropped: true };
+  startCrop(orig, orig.fromCropped ? null : draftPhoto.cropState);
+}
+function startCrop(orig, state) {
+  crop.orig = orig;
+  Object.assign(crop, { img: orig.img, zoom: 1, rot90: 0, fine: 0, tx: 0, ty: 0, pending: state || null });
   $('#cropTitle').textContent = `裁切${TYPE[draft.type].name}卡的照片`;
   $('#cropper').hidden = false; document.body.style.overflow = 'hidden';
-  requestAnimationFrame(() => { layoutCrop(); drawCrop(); });
+  requestAnimationFrame(() => {
+    layoutCrop();
+    const st = crop.pending;
+    if (st) Object.assign(crop, { zoom: st.zoom || 1, rot90: st.rot90 || 0, fine: st.fine || 0, tx: (st.txN || 0) * crop.frame.w, ty: (st.tyN || 0) * crop.frame.h });
+    crop.pending = null;
+    $('#cropZoom').value = crop.zoom; $('#cropRot').value = crop.fine; $('#cropZoomOut').textContent = crop.zoom.toFixed(1) + '×'; $('#cropRotOut').textContent = crop.fine + '°';
+    drawCrop();
+  });
 }
 function layoutCrop() {
   const cv = $('#cropCanvas'), r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
@@ -1620,7 +1654,8 @@ function closeCropper() { $('#cropper').hidden = true; document.body.style.overf
     ctx.translate(ow / 2 + crop.tx * k, oh / 2 + crop.ty * k); ctx.rotate(cropAngle()); ctx.scale(crop.s * k, crop.s * k);
     ctx.imageSmoothingQuality = 'high'; ctx.drawImage(crop.img, -crop.img.naturalWidth / 2, -crop.img.naturalHeight / 2);
     const dataUrl = out.toDataURL('image/jpeg', .9), img = await loadImg(dataUrl);
-    draftPhoto = { dataUrl, img, file: crop.file, isNew: true };
+    const cropState = { zoom: crop.zoom, rot90: crop.rot90, fine: crop.fine, txN: crop.tx / f.w, tyN: crop.ty / f.h };
+    draftPhoto = { dataUrl, img, isNew: true, orig: crop.orig.fromCropped ? null : crop.orig, cropState: crop.orig.fromCropped ? null : cropState };
     closeCropper(); renderEditor();
   });
   window.addEventListener('resize', () => { if (!$('#cropper').hidden) { layoutCrop(); drawCrop(); } });
