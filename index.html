@@ -1612,7 +1612,8 @@ async function api(action, payload = {}) {
   try { res = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, auth: AUTH, ...payload }) }); }
   catch (e) { throw Object.assign(new Error('連不上後台，請確認網路'), { code: 'network' }); }
   let j; try { j = await res.json(); } catch (e) { throw Object.assign(new Error('後台回應格式不對，請確認 Apps Script 已部署成網頁應用程式'), { code: 'bad_response' }); }
-  if (!j.ok) { const err = Object.assign(new Error(j.error || '發生錯誤'), { code: j.code }); if (j.code === 'auth') onAuthExpired(); throw err; }
+  if (!j.ok) { const err = Object.assign(new Error(j.error || '發生錯誤'), { code: j.code }); if (j.code === 'auth' || (j.code === 'not_editor' && AUTH && AUTH.session)) onAuthExpired(); throw err; }
+  if (j.session) { AUTH = { session: j.session }; saveDevice({ mode: 'parent', session: j.session }); }
   return j.data;
 }
 const RemoteStore = {
@@ -1691,12 +1692,13 @@ function renderWho() {
 }
 const saveDevice = v => lsSet('fc-device', v);
 function logout() {
+  if (!DEMO && AUTH && AUTH.session) api('logout').catch(() => {});
   saveDevice(null); AUTH = null; ROLE = null; KID = null; draft = null;
   try { if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect(); } catch (e) {}
   renderLogin(); show('login');
 }
 function onAuthExpired() {
-  if (ROLE === 'editor') { toast('登入過期了，請重新登入'); AUTH = null; renderLogin(); show('login'); }
+  if (ROLE === 'editor' || (AUTH && AUTH.session)) { toast('登入過期了，請重新登入'); AUTH = null; saveDevice(null); renderLogin(); show('login'); }
   else if (ROLE === 'viewer') { toast('家庭密碼不對或已更換'); saveDevice(null); AUTH = null; ROLE = null; renderLogin(); show('login'); }
 }
 
@@ -1761,7 +1763,7 @@ async function startGoogle(box) {
 }
 async function onCredential(resp) {
   AUTH = { idToken: resp.credential };
-  try { await loadData(); if (ROLE !== 'editor') throw new Error('這個帳號沒有編輯權限'); saveDevice({ mode: 'parent' }); enterParent(); }
+  try { await loadData(); if (ROLE !== 'editor') throw new Error('這個帳號沒有編輯權限'); if (!(AUTH && AUTH.session)) saveDevice({ mode: 'parent' }); enterParent(); }
   catch (e) { const el = $('#loginErr'); if (el) el.textContent = e.message; AUTH = null; }
 }
 function enterParent() { ROLE = 'editor'; go('cards'); }
@@ -2586,6 +2588,14 @@ document.body.append(h('button', { class: 'mini', id: 'mini', type: 'button', hi
   }
   if (dev && dev.mode === 'parent' && DEMO) { ROLE = 'editor'; await loadData(); enterParent(); return; }
   renderLogin(); show('login');
+  if (dev && dev.mode === 'parent' && !DEMO && dev.session) {
+    // 用上次的登入憑證直接進入，不用再按 Google 登入
+    AUTH = { session: dev.session }; ROLE = 'editor';
+    if (cache && cache.cards) enterParent();
+    try { await loadData(); if (!cache || !cache.cards) enterParent(); else if (current === 'cards') renderCards(); }
+    catch (e) { if (e.code !== 'auth') { toast(e.message); if (!cache) { renderLogin(); show('login'); } } }
+    return;
+  }
   if (dev && dev.mode === 'parent' && !DEMO && CONFIG.GOOGLE_CLIENT_ID) { const b = document.querySelector('#v-login .btn.primary'); b && b.click(); }
 })();
 })();
